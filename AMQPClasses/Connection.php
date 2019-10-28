@@ -3,14 +3,17 @@
 
 namespace MonsterMQ\Classes;
 
-use MonsterMQ\Interfaces\BinaryTransmitter\BinaryTransmitter;
 use MonsterMQ\Interfaces\Classes\Connection as ConnectionClassInterface;
 
 class Connection implements ConnectionClassInterface
 {
+    /**
+     * Binary transmitter instance.
+     * @var BinaryTransmitter
+     */
     protected $binaryTransmitter;
 
-    public function __construct(BinaryTransmitter $transmitter)
+    public function __construct($transmitter)
     {
         $this->binaryTransmitter = $transmitter;
     }
@@ -23,6 +26,7 @@ class Connection implements ConnectionClassInterface
     {
         $this->binaryTransmitter->sendOctet(1);
         $this->binaryTransmitter->sendShort(0);
+
 
         $this->binaryTransmitter->sendLong();
     }

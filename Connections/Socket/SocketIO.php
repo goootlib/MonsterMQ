@@ -1,6 +1,6 @@
 <?php
 
-namespace MonsterMQ\Connections\IO;
+namespace MonsterMQ\Connections\Socket;
 
 use http\Exception\InvalidArgumentException;
 use MonsterMQ\Exceptions\SocketException;
@@ -41,14 +41,6 @@ class SocketIO implements SocketInterface
     protected $useIPv6 = false;
 
     /**
-     * Indicates whether to use unix sockets,
-     * in case the connection will be established
-     * between two local processes.
-     * @var bool
-     */
-    protected $useUnixSockets = false;
-
-    /**
      * Whether to use UDP transport.
      * False means use TCP.
      * @var bool
@@ -84,11 +76,8 @@ class SocketIO implements SocketInterface
         //on transmitter creation in order to user have not to do it manually after.
         //In case of using non-default options you have to invoke Transmitter::bind()
         //and Transmitter::connect() methods manually after.
-        $isBound = $this->bind('127.0.0.1',null,false);
+        $this->connect();
 
-        if($isBound !== false) {
-            $this->open();
-        }
     }
 
     /**
@@ -124,20 +113,6 @@ class SocketIO implements SocketInterface
     }
 
     /**
-     * Enables Unix sockets. Should be used
-     * in case of local communication. High efficiency
-     * and low overhead make it a great form of IPC
-     * (Interprocess Communication).
-     * @return $this For chaining puposes.
-     */
-    public function useUnixSockets()
-    {
-        $this->useUnixSockets = true;
-
-        return $this;
-    }
-
-    /**
      * Disables execution blocking on
      * read, write, connect etc. operations.
      * @return $this For chaining purposes.
@@ -148,7 +123,6 @@ class SocketIO implements SocketInterface
 
         return $this;
     }
-
 
     /**
      * Sets reading timeout after which reading
@@ -218,8 +192,9 @@ class SocketIO implements SocketInterface
      * Whether IPv4 going to be used for connection.
      * @return bool IPv4 enabled or not.
      */
-    public function IPv4enabled(){
-        return $this->useUnixSockets == false && $this->useIPv6 == false;
+    public function IPv4enabled()
+    {
+        return $this->useIPv6 == false;
     }
 
     /**
@@ -229,14 +204,7 @@ class SocketIO implements SocketInterface
      */
     protected function getSocketDomain ()
     {
-        if($this->IPv4enabled()){
-            $domain = AF_INET;
-        }else {
-            //In case of both domains are enabled. Unix sockets will take precedence.
-            $domain = $this->useUnixSockets == false && $this->useIPv6 == true ? AF_INET6 : AF_UNIX;
-        }
-
-        return $domain;
+        return $this->IPv4enabled() ? AF_INET : AF_INET6;
     }
 
     /**
@@ -246,8 +214,7 @@ class SocketIO implements SocketInterface
      */
     protected function getSocketTransport()
     {
-        // 0 is the value for unix sockets transport type
-        return $this->useUDPTransport ? SOL_UDP : $this->useUnixSockets ? 0 : SOL_TCP;
+        return $this->useUDPTransport ? SOL_UDP : SOL_TCP;
     }
 
 
@@ -315,13 +282,9 @@ class SocketIO implements SocketInterface
      * @throws SocketException May be thrown when can not bind
      *  specified address.
      */
-    public function bind ($address = '127.0.0.1', $port = null, $throwOnFailure = true)
+    public function bind ($port = null, $address = '127.0.0.1', $throwOnFailure = true)
     {
         $this->refreshResource();
-        //Require write access to this file
-        if($this->useUnixSockets == true && !file_exists($address)){
-            $address = '~/tmp/sockets/monstermq.sock';
-        }
 
         $result = socket_bind($this->resource, $address, $port);
 
@@ -339,25 +302,17 @@ class SocketIO implements SocketInterface
     }
 
     /**
-     * Connect to specified address and port.
+     * Connects to specified address and port.
      * @param string $address IP address which AMQP server listens
      *  or socket file to connect through.
      * @param int $AMQPport Port to which AMQP server was bound.
      * @throws SocketException Throws in case of connection
      *  could not be established.
      */
-    public function open ($address = '127.0.0.1', $AMQPport = 5672)
+    public function connect ($address = '127.0.0.1', $AMQPport = 5672)
     {
         if(!$this->isBound){
-            throw new SocketException(
-                'Connection try without preceding socket binding.
-                Bind socket with SocketTransmitter::bind() method
-                before trying to connect.'
-            );
-        }
-
-        if($this->useUnixSockets){
-            $AMQPport = null;
+            $this->bind();
         }
 
         $result = socket_connect($this->resource, $address, $AMQPport);
@@ -407,5 +362,15 @@ class SocketIO implements SocketInterface
     public function getLastErrorMessage()
     {
         return socket_strerror(socket_last_error($this->resource));
+    }
+
+    /**
+     * Closes socket connection. Before closing network connections don't
+     * forget to send Connection.Close method to the server. Or hand-shake
+     * incoming Connection.Close with Connection.CloseOk .
+     */
+    public function close()
+    {
+        socket_close($this->resource);
     }
 }
