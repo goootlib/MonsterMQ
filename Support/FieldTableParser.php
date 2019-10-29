@@ -107,34 +107,57 @@ trait FieldTableParser
         return [$data, $length];
     }
 
+    /**
+     * Fetches timestamp field.
+     * @return array First element contains timestamp,
+     * second - its size, which always 8 byte.
+     */
     protected function getTimestamp()
     {
         return [$this->receiveLongLong(), 8];
     }
 
+    /**
+     * Fetches array field.
+     * @return array First element contains array,
+     * second - its size.
+     */
     protected function getFieldArray()
     {
         $length = $this->receiveLong();
         $read = 0;
         while ($read < $length) {
-            $valueType = char($this->receiveOctet());
+            $valueType = $this->receiveRaw(1);
             $read += 1;
-            $valueWithSize = $this->getFieldValue($valueType);
+            $valueWithSize = $this->getFieldTableValue($valueType);
             $read += $valueWithSize[1];
             $resultArray[] = $valueWithSize[0];
         }
         return [$resultArray, $read];
     }
 
-    public function getFieldTable()
+    /**
+     * Fetches nested Field Table.
+     * @return array
+     */
+    protected function getFieldTable()
     {
          return $this->receiveFieldTable(true);
     }
 
-    public function getFieldTableValueWithLength($valueType)
+    /**
+     * Fetches value along with value's size from Field Table.
+     * @param string $valueType Type of Field Table value to fetch.
+     * @return array First element contains value, second - size.
+     */
+    public function getFieldTableValue($valueType)
     {
         $method = $this->methodMap[$valueType];
-        $valueWithSize = $this->{$method};
+
+        if($valueType == FieldType::VOID || !isset($method)){
+            return;
+        }
+        $valueWithSize = $this->{$method}();
         return $valueWithSize;
     }
 }

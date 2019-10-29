@@ -40,4 +40,6 @@ class FieldType
     const TIMESTAMP = 'T';
 
     const FIELD_TABLE = 'F';
+
+    const VOID = 'V';
 }

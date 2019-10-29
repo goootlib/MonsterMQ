@@ -8,7 +8,7 @@ use MonsterMQ\Support\FieldTableParser;
 use MonsterMQ\Support\FieldType;
 use MonsterMQ\Support\NumberConverter;
 
-require dirname(__DIR__)."\\Support\\FieldTableParser.php";
+require dirname(__DIR__)."/Support/FieldTableParser.php";
 
 class BinaryTransmitter
 {
@@ -39,7 +39,7 @@ class BinaryTransmitter
         }
 
         $binary = pack('C',$number);
-        $this->socket->writeRaw($binary);
+        $this->sendRaw($binary);
     }
 
     /**
@@ -55,7 +55,7 @@ class BinaryTransmitter
         }
 
         $binary = pack('n',$number);
-        $this->socket->writeRaw($binary);
+        $this->sendRaw($binary);
     }
 
     /**
@@ -71,7 +71,7 @@ class BinaryTransmitter
         }
 
         $binary = pack('N', $number);
-        $this->socket->writeRaw($binary);
+        $this->sendRaw($binary);
     }
 
     /**
@@ -81,7 +81,7 @@ class BinaryTransmitter
      */
     public function receiveOctet()
     {
-        $binaryData = $this->socket->readRaw(1);
+        $binaryData = $this->receiveRaw(1);
         $translatedData = unpack('C',$binaryData);
         return $translatedData[1];
     }
@@ -93,7 +93,7 @@ class BinaryTransmitter
      */
     public function receiveShort()
     {
-        $binaryData = $this->socket->readRaw(2);
+        $binaryData = $this->receiveRaw(2);
         $translatedData = unpack('n', $binaryData);
         return $translatedData[1];
     }
@@ -105,9 +105,21 @@ class BinaryTransmitter
      */
     public function receiveLong()
     {
-        $binaryData = $this->socket->readRaw(4);
-        $translatedData = unpack('N',$binaryData);
+        $binaryData = $this->receiveRaw(4);
+        $translatedData = unpack('N', $binaryData);
         return $translatedData[1];
+    }
+
+    /**
+     * Receives 64 bits from network
+     * and translates it to unsigned integer.
+     * @return int
+     */
+    public function receiveLongLong()
+    {
+        $rawData = $this->receiveRaw(8);
+        $translated = unpack('J', $rawData);
+        return $translated[1];
     }
 
     /**
@@ -118,9 +130,9 @@ class BinaryTransmitter
      */
     public function receiveShortStr()
     {
-        $rawLength = $this->socket->readRaw(1);
+        $rawLength = $this->receiveRaw(1);
         list(,$length) = unpack('C', $rawLength);
-        $data = $this->socket->readRaw($length);
+        $data = $this->receiveRaw($length);
         return $data;
     }
 
@@ -138,18 +150,13 @@ class BinaryTransmitter
     }
 
     /**
-     * Receives 64 bits from network
-     * and translates it to unsigned integer.
-     * @return int
+     * Receives Field Table parameter on server response.
+     * @param bool $returnSize Whether to return size of
+     * returning data.
+     * @return array Associative array representing
+     * field table.
      */
-    public function receiveLongLong()
-    {
-        $rawData = $this->receiveRaw(8);
-        $translated = unpack('J', $rawData);
-        return $translated[1];
-    }
-
-    public function receiveFieldTable($returnWithSize = false)
+    public function receiveFieldTable($returnSize = false)
     {
         $tableSize = $this->receiveLong();
         $readLength = 0;
@@ -160,16 +167,16 @@ class BinaryTransmitter
             //Add key length
             $readLength += strlen($key);
 
-            $valueType = chr($this->receiveOctet());
+            $valueType = $this->receiveRaw(1);
             //Add 1 octet as value type
             $readLength += 1;
-            $valueWithLength = $this->getFieldTableValueWithLength($valueType);
+            $valueWithLength = $this->getFieldTableValue($valueType);
             //Add length of Field Table value
             $readLength += $valueWithLength[1];
             $result[$key] = $valueWithLength[0];
         }
 
-        if($returnWithSize == true){
+        if($returnSize == true){
             return [$result, $tableSize];
         }else{
             return $result;
@@ -185,20 +192,21 @@ class BinaryTransmitter
     public function receiveBit()
     {
         $rawByte = $this->receiveRaw(1);
-        $value = $rawByte | 1 ? 1 : 0;
+        $value = @($rawByte | 1) ? 1 : 0;
         return $value;
     }
     /**
      * Reads raw, untranslated data from network.
      * @param $bytes Amount of data to read.
+     * @return string Returns untranlated raw data.
      */
     public function receiveRaw($bytes)
     {
-        $this->socket->readRaw($bytes);
+        return $this->socket->readRaw($bytes);
     }
 
     /**
-     * Sends raw data to network.
+     * Sends raw data through network.
      * @param $data Data to be sent.
      */
     public function sendRaw($data)
