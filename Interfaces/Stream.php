@@ -2,7 +2,7 @@
 
 namespace MonsterMQ\Interfaces;
 
-Interface Socket
+Interface Stream
 {
     /**
      * This method writes data to previously
@@ -29,7 +29,7 @@ Interface Socket
      * @param int $AMQPport
      * @return mixed
      */
-    public function connect ($address = '127.0.0.1', $AMQPport = 5672);
+    public function connect ($address = '127.0.0.1', $AMQPport = 5672, $connectionTimeout = null);
 
     /**
      * Closes current network connection.

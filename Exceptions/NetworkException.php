@@ -3,7 +3,7 @@
 
 namespace MonsterMQ\Exceptions;
 
-class SocketException extends \Exception
+class NetworkException extends \Exception
 {
 
 }

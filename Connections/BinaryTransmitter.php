@@ -3,13 +3,17 @@
 namespace MonsterMQ\Connections;
 
 use http\Exception\InvalidArgumentException;
-use MonsterMQ\Interfaces\Socket;
+use MonsterMQ\Interfaces\Stream;
 use MonsterMQ\Support\FieldTableParser;
 use MonsterMQ\Support\FieldType;
 use MonsterMQ\Support\NumberConverter;
 
-require dirname(__DIR__)."/Support/FieldTableParser.php";
-
+/**
+ * This class helps to receive and send data(through network)
+ * translated to binary format.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
 class BinaryTransmitter
 {
     use FieldTableParser;
@@ -17,17 +21,19 @@ class BinaryTransmitter
     /**
      * Instance of socket connection which provide
      * API for sending and receiving raw data.
-     * @var \MonsterMQ\Interfaces\Socket
+     *
+     * @var \MonsterMQ\Interfaces\Stream
      */
     protected $socket;
 
-    public function __construct(Socket $socket)
+    public function __construct(Stream $socket)
     {
         $this->socket = $socket;
     }
 
     /**
      * Translates and sends unsigned integer as 8 bits.
+     *
      * @param int $number Must be between 0 and 255.
      */
     public function sendOctet(int $number)
@@ -44,6 +50,7 @@ class BinaryTransmitter
 
     /**
      * Translates and sends unsigned integer as 16 bits.
+     *
      * @param int $number Must be between 0 and 65535.
      */
     public function sendShort(int $number)
@@ -60,7 +67,8 @@ class BinaryTransmitter
 
     /**
      * Translates and sends unsigned integer as 32 bits.
-     * @param int $number Must be between 0 and 4294967295.
+     *
+     * @param int $number Must be between 0 and 2^32-1.
      */
     public function sendLong(int $number)
     {
@@ -75,8 +83,22 @@ class BinaryTransmitter
     }
 
     /**
+     * Receives bit from network. AMQP converts bits into bytes.
+     * So we need to do backward conversion.
+     *
+     * @return int Bit read from network.
+     */
+    public function receiveBit()
+    {
+        $rawByte = $this->receiveRaw(1);
+        $value = @($rawByte | 1) ? 1 : 0;
+        return $value;
+    }
+
+    /**
      * Receives 8 bits from network and translates it
      * to unsigned integer.
+     *
      * @return int
      */
     public function receiveOctet()
@@ -89,6 +111,7 @@ class BinaryTransmitter
     /**
      * Receives 16 bits from network and translates it
      * to unsigned integer.
+     *
      * @return int
      */
     public function receiveShort()
@@ -101,6 +124,7 @@ class BinaryTransmitter
     /**
      * Receives 32 bits from network and translates it
      * to unsigned integer.
+     *
      * @return int
      */
     public function receiveLong()
@@ -113,6 +137,7 @@ class BinaryTransmitter
     /**
      * Receives 64 bits from network
      * and translates it to unsigned integer.
+     *
      * @return int
      */
     public function receiveLongLong()
@@ -126,6 +151,7 @@ class BinaryTransmitter
      * Reads 256-byte maximum string from network.
      * Short string type contains first octet
      * which indicates the length of string.
+     *
      * @return string
      */
     public function receiveShortStr()
@@ -140,6 +166,7 @@ class BinaryTransmitter
      * Reads 2^32 maximum length string.
      * Long strings contain first 32 bits which
      * indicating the length of string.
+     *
      * @return string
      */
     public function receiveLongStr()
@@ -150,7 +177,8 @@ class BinaryTransmitter
     }
 
     /**
-     * Receives Field Table parameter on server response.
+     * Receives Field Table parameter from server response.
+     *
      * @param bool $returnSize Whether to return size of
      * returning data.
      * @return array Associative array representing
@@ -159,7 +187,8 @@ class BinaryTransmitter
     public function receiveFieldTable($returnSize = false)
     {
         $tableSize = $this->receiveLong();
-        $readLength = 0;
+        //Size of size indicator also included
+        $readLength = 4;
         while ($readLength < $tableSize){
             $key = $this->receiveShortStr();
             //Add 1 byte as length indicator of key
@@ -185,20 +214,10 @@ class BinaryTransmitter
     }
 
     /**
-     * Receives bit from network. AMQP converts bits into bytes.
-     * So we need to do backward conversion.
-     * @return int
-     */
-    public function receiveBit()
-    {
-        $rawByte = $this->receiveRaw(1);
-        $value = @($rawByte | 1) ? 1 : 0;
-        return $value;
-    }
-    /**
      * Reads raw, untranslated data from network.
-     * @param $bytes Amount of data to read.
-     * @return string Returns untranlated raw data.
+     *
+     * @param int $bytes Amount of data to read.
+     * @return string Untranslated raw data.
      */
     public function receiveRaw($bytes)
     {
@@ -206,11 +225,13 @@ class BinaryTransmitter
     }
 
     /**
-     * Sends raw data through network.
-     * @param $data Data to be sent.
+     * Sends raw untranslated data through network.
+     *
+     * @param string $data Data to be sent.
+     * @return int Amount of data has been sent.
      */
     public function sendRaw($data)
     {
-        $this->socket->writeRaw($data);
+        return $this->socket->writeRaw($data);
     }
 }

@@ -25,6 +25,11 @@ class Producer
         $this->io = $transmitter;
     }
 
+    public function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+    }
+
     /**
      * Returns transmitter instance.
      * @return MonsterMQ\Interfaces\Transmitter|TransmitterInterface

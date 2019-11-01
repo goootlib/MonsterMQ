@@ -2,10 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="757c743f-01cd-459c-8f8a-c48533e9aac4" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/Connections/Stream.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AMQPClasses/Connection.php" beforeDir="false" afterPath="$PROJECT_DIR$/AMQPClasses/Connection.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/Producer.php" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Producer.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Support/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Support/FieldTableParser.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Support/FieldType.php" beforeDir="false" afterPath="$PROJECT_DIR$/Support/FieldType.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/Socket/SocketIO.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Exceptions/SocketException.php" beforeDir="false" afterPath="$PROJECT_DIR$/Exceptions/NetworkException.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Interfaces/Socket.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/Stream.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Support/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/FieldTableParser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/connect.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -37,11 +43,11 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\OSPanel\domains\MonsterMQ\Connections" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Exceptions" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Interfaces" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Client" />
       <recent name="C:\OSPanel\domains\MonsterMQ" />
-      <recent name="C:\OSPanel\domains\MonsterMQ\Connections" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -98,6 +104,11 @@
       <workItem from="1571997760158" duration="111000" />
       <workItem from="1572247072957" duration="6129000" />
       <workItem from="1572333177472" duration="5323000" />
+      <workItem from="1572419903848" duration="6094000" />
+      <workItem from="1572506191053" duration="6228000" />
+      <workItem from="1572512520460" duration="23000" />
+      <workItem from="1572525830638" duration="86000" />
+      <workItem from="1572592713754" duration="4227000" />
     </task>
     <servers />
   </component>

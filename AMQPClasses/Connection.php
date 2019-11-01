@@ -5,6 +5,7 @@ namespace MonsterMQ\Classes;
 
 use MonsterMQ\Interfaces\Classes\Connection as ConnectionClassInterface;
 
+
 class Connection implements ConnectionClassInterface
 {
     /**
