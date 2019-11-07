@@ -2,15 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="757c743f-01cd-459c-8f8a-c48533e9aac4" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/Connections/Stream.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/MonsterMQ.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MonsterMQ.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AMQPClasses/Connection.php" beforeDir="false" afterPath="$PROJECT_DIR$/AMQPClasses/Connection.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/Producer.php" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Producer.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AMQPClasses/Connection.php" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Connections/Socket/SocketIO.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Exceptions/SocketException.php" beforeDir="false" afterPath="$PROJECT_DIR$/Exceptions/NetworkException.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interfaces/Socket.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/Stream.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Support/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/FieldTableParser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/FieldTableParser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/Stream.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/Stream.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Interfaces/Classes/Connection.php" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/connect.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -19,7 +19,8 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ComposerSettings">
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
+    <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
     <execution>
       <executable />
     </execution>
@@ -28,7 +29,39 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="PhpDebugGeneral" listening_started="true" />
-  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="PHP" />
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="PHP">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/myclabs/deep-copy" />
+      <path value="$PROJECT_DIR$/vendor/phar-io/manifest" />
+      <path value="$PROJECT_DIR$/vendor/phar-io/version" />
+      <path value="$PROJECT_DIR$/vendor/phpspec/prophecy" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-code-coverage" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-file-iterator" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-text-template" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-timer" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-token-stream" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/phpunit" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-ctype" />
+      <path value="$PROJECT_DIR$/vendor/theseer/tokenizer" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/instantiator" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/code-unit-reverse-lookup" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/comparator" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/diff" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/environment" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/exporter" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/global-state" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/object-enumerator" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/object-reflector" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/recursion-context" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/resource-operations" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/version" />
+      <path value="$PROJECT_DIR$/vendor/webmozart/assert" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-common" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/type-resolver" />
+    </include_path>
+  </component>
   <component name="ProjectId" id="1S0FEf4k0CPy9isM2FUrbaC3Icp" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="1" id="Add" />
@@ -39,14 +72,14 @@
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="PHP" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="fileTemplates" />
+    <property name="settings.editor.selected.configurable" value="reference.webide.settings.project.settings.php" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\OSPanel\domains\MonsterMQ\Client" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Connections" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Exceptions" />
       <recent name="C:\OSPanel\domains\MonsterMQ\Interfaces" />
-      <recent name="C:\OSPanel\domains\MonsterMQ\Client" />
       <recent name="C:\OSPanel\domains\MonsterMQ" />
     </key>
   </component>
@@ -109,6 +142,11 @@
       <workItem from="1572512520460" duration="23000" />
       <workItem from="1572525830638" duration="86000" />
       <workItem from="1572592713754" duration="4227000" />
+      <workItem from="1572620410838" duration="127000" />
+      <workItem from="1572851939842" duration="1027000" />
+      <workItem from="1572938222221" duration="6096000" />
+      <workItem from="1573024670669" duration="6158000" />
+      <workItem from="1573110603042" duration="6668000" />
     </task>
     <servers />
   </component>

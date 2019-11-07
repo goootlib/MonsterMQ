@@ -1,7 +1,9 @@
 <?php
 
 
-namespace MonsterMQ\Support;
+namespace MonsterMQ\Connections;
+
+use http\Exception\InvalidArgumentException;
 
 /**
  * This trait adds parse logic of AMQP tables
@@ -51,7 +53,11 @@ trait FieldTableParser
      */
     protected function getShortShortInt()
     {
-        $raw = $this->receiveRaw(1);
+        if($this->accumulate){
+            $raw = $this->retrieveFromBuffer(1);
+        }else {
+            $raw = $this->receiveRaw(1);
+        }
         $translated = unpack('c', $raw);
         return [$translated[1], 1];
     }
@@ -133,7 +139,11 @@ trait FieldTableParser
      */
     protected function getFloat()
     {
-        $raw = $this->receiveRaw(4);
+        if($this->accumulate){
+            $raw = $this->retrieveFromBuffer(4);
+        }else {
+            $raw = $this->receiveRaw(4);
+        }
         $translated = unpack('G', $raw);
         return [$translated[1], 4];
     }
@@ -147,7 +157,11 @@ trait FieldTableParser
      */
     protected function getDouble()
     {
-        $raw = $this->receiveRaw(8);
+        if($this->accumulate){
+            $raw = $this->retrieveFromBuffer(8);
+        }else {
+            $raw = $this->receiveRaw(8);
+        }
         $translated = unpack('E', $raw);
         return [$translated[1], 8];
     }
@@ -219,7 +233,11 @@ trait FieldTableParser
         $length = $this->receiveLong();
         $read = 0;
         while ($read < $length) {
-            $valueType = $this->receiveRaw(1);
+            if($this->accumulate){
+                $valueType = $this->retrieveFromBuffer(1);
+            }else {
+                $valueType = $this->receiveRaw(1);
+            }
             $read += 1;
             $valueWithSize = $this->getFieldTableValue($valueType);
             $read += $valueWithSize[1];
@@ -255,4 +273,5 @@ trait FieldTableParser
         $valueWithSize = $this->{$method}();
         return $valueWithSize;
     }
+
 }
