@@ -342,6 +342,8 @@ class Stream implements StreamInterface
      */
     public function close()
     {
-        stream_socket_shutdown($this->streamResource, STREAM_SHUT_RDWR);
+        if (isset($this->streamResource)) {
+            stream_socket_shutdown($this->streamResource, STREAM_SHUT_RDWR);
+        }
     }
 }

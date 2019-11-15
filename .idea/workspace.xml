@@ -2,15 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="757c743f-01cd-459c-8f8a-c48533e9aac4" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/MonsterMQ.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MonsterMQ.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AMQPClasses/Connection.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" beforeDir="false" afterPath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Connections/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/FieldTableParser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/FieldTablePacker.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValuePacker.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValueUnpacker.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Connections/Stream.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/Stream.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interfaces/Classes/Connection.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Interfaces/AMQPClass.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/AMQPClass.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Interfaces/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/BinaryTransmitter.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Support/ValidateFrameDelimiter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Support/FrameDelimiting.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/composer.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/connect.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -28,7 +32,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="PhpDebugGeneral" listening_started="true" />
+  <component name="PhpDebugGeneral" xdebug_debug_port="9001" listening_started="true" />
+  <component name="PhpServers">
+    <servers>
+      <server host="localhost" id="ede47a69-1d01-4a34-b7e9-ecac90a35600" name="UnnamedServer" />
+    </servers>
+  </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="PHP">
     <include_path>
       <path value="$PROJECT_DIR$/vendor/composer" />
@@ -60,8 +69,10 @@
       <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-common" />
       <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-docblock" />
       <path value="$PROJECT_DIR$/vendor/phpdocumentor/type-resolver" />
+      <path value="$PROJECT_DIR$/vendor/php-amqplib/php-amqplib" />
     </include_path>
   </component>
+  <component name="PhpXdebugProxy" ide_key="PHPSTORM" host="localhost" />
   <component name="ProjectId" id="1S0FEf4k0CPy9isM2FUrbaC3Icp" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="1" id="Add" />
@@ -72,7 +83,7 @@
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="PHP" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="reference.webide.settings.project.settings.php" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.php.debug.xdebug.proxy" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -147,6 +158,15 @@
       <workItem from="1572938222221" duration="6096000" />
       <workItem from="1573024670669" duration="6158000" />
       <workItem from="1573110603042" duration="6668000" />
+      <workItem from="1573197187449" duration="6767000" />
+      <workItem from="1573456638871" duration="6290000" />
+      <workItem from="1573478040699" duration="84000" />
+      <workItem from="1573478763080" duration="58000" />
+      <workItem from="1573543117932" duration="6281000" />
+      <workItem from="1573550509448" duration="2673000" />
+      <workItem from="1573629444394" duration="9168000" />
+      <workItem from="1573715717637" duration="8803000" />
+      <workItem from="1573802373743" duration="9646000" />
     </task>
     <servers />
   </component>

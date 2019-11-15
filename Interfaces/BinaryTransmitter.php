@@ -17,9 +17,31 @@ interface BinaryTransmitter
     public function disableBuffering();
 
     /**
+     * Whether buffering enabled or not.
+     *
+     * @return bool
+     */
+    public function bufferingEnabled(): bool;
+
+    /**
      * Returns length of accumulated data.
+     *
+     * @return int
      */
     public function bufferLength(): int;
+
+
+    public function getBufferContent(): string;
+
+    /**
+     * Sends length of buffer through network.
+     */
+    public function sendBufferLength();
+
+    /**
+     * Sends data accumulated in buffer and clears it.
+     */
+    public function sendBuffer();
 
     /**
      * Translates and sends unsigned integer as 8 bits.
@@ -43,7 +65,29 @@ interface BinaryTransmitter
     public function sendLong(int $number);
 
     /**
-     * Receives bit from network. AMQP converts bits into bytes. So we need to do backward conversion.
+     * Sends string up to 256 bytes length.
+     *
+     * @param string $value
+     */
+    public function sendShortStr(string $value);
+
+    /**
+     * Sends strings up to 2^64 bits length.
+     *
+     * @param  string $value Value to be sent.
+     */
+    public function sendLongStr(string $value);
+
+    /**
+     * Sends AMQP field table translated from php array.
+     *
+     * @param array $dataArray
+     */
+    public function sendFieldTable(array $dataArray);
+
+    /**
+     * Receives bit from network. AMQP converts bits into bytes. So we need to
+     * do backward conversion.
      *
      * @return int Bit read from network.
      */
@@ -78,15 +122,16 @@ interface BinaryTransmitter
     public function receiveLongLong(): int;
 
     /**
-     * Reads 256-byte maximum string from network. Short string type contains first octet which indicates
-     * the length of string.
+     * Reads 256-byte maximum string from network. Short string type contains
+     * first octet which indicates the length of string.
      *
      * @return string
      */
     public function receiveShortStr(): string;
 
     /**
-     * Reads 2^32 maximum length string. Long strings contain first 32 bits which indicating the length of string.
+     * Reads 2^32 maximum length string. Long strings contain first 32 bits
+     * which indicating the length of string.
      *
      * @return string
      */
@@ -107,7 +152,7 @@ interface BinaryTransmitter
      * @param int $bytes Amount of data to read.
      * @return string    Untranslated raw data.
      */
-    public function receiveRaw($bytes): string;
+    public function receiveRaw(int $bytes): string;
 
     /**
      * Sends raw untranslated data through network.
@@ -115,5 +160,5 @@ interface BinaryTransmitter
      * @param string $data Data to be sent.
      * @return int         Amount of data has been sent.
      */
-    public function sendRaw($data): int;
+    public function sendRaw(string $data): ?int;
 }

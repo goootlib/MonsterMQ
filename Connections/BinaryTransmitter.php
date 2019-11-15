@@ -3,10 +3,13 @@
 namespace MonsterMQ\Connections;
 
 use http\Exception\InvalidArgumentException;
-use MonsterMQ\Interfaces\Stream;
+use MonsterMQ\Exceptions\PackerException;
+use MonsterMQ\Interfaces\Stream as StreamInterface;
 use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
-use MonsterMQ\Connections\FieldTableParser;
-use MonsterMQ\Connections\FieldTablePacker;
+use MonsterMQ\Interfaces\TableValueUnpacker as TableValueUnpackerInterface;
+use MonsterMQ\Interfaces\TableValuePacker as TableValuePackerInterface;
+use MonsterMQ\Connections\TableValueUnpacker;
+use MonsterMQ\Connections\TableValuePacker;
 use MonsterMQ\Support\FieldType;
 use MonsterMQ\Support\NumberConverter;
 
@@ -18,8 +21,6 @@ use MonsterMQ\Support\NumberConverter;
  */
 class BinaryTransmitter implements BinaryTransmitterInterface
 {
-    use FieldTableParser;
-    use FieldTablePacker;
 
     /**
      * Instance of socket connection which provide API for sending and
@@ -30,11 +31,19 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     protected $socket;
 
     /**
-     * Whether machine byte order is little endian or not.
+     * Instance of field table value unpacker, responsible for parsing table
+     * values.
      *
-     * @var bool
+     * @var TableValueUnpackerInterface
      */
-    protected $isLittleEndian;
+    protected $tableValueUnpacker;
+
+    /**
+     * Field table value packer instance
+     *
+     * @var TableValuePacker
+     */
+    public $tableValuePacker;
 
     /**
      * Whether to store data in buffer instead of sending or receiving it
@@ -49,14 +58,17 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      *
      * @var string
      */
-    protected $buffer;
+    protected $buffer = "";
 
-    public function __construct(Stream $socket)
-    {
+    public function __construct(
+        StreamInterface $socket,
+        TableValueUnpackerInterface $unpacker = null,
+        TableValuePackerInterface $packer = null
+    ){
         $this->socket = $socket;
+        $this->tableValueUnpacker = $unpacker ?? new TableValueUnpacker($this);
+        $this->tableValuePacker = $packer ?? new TableValuePacker($this);
 
-        $binary = unpack('S', "\x01\x00");
-        $this->isLittleEndian = $binary[1] == 1;
     }
 
     /**
@@ -76,6 +88,16 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
+     * Whether buffering enabled or not.
+     *
+     * @return bool
+     */
+    public function bufferingEnabled(): bool
+    {
+        return $this->accumulate;
+    }
+
+    /**
      * Returns size of data accumulated in buffer.
      *
      * @return int
@@ -86,85 +108,32 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
+     * Returns accumulated content.
+     *
+     * @return string
+     */
+    public function getBufferContent(): string
+    {
+        return $this->buffer;
+    }
+
+    /**
+     * Sends length of buffer through network.
+     */
+    public function sendBufferLength()
+    {
+        $transmitter = new BinaryTransmitter($this->socket);
+        var_dump($this->bufferLength());
+        $transmitter->sendLong($this->bufferLength());
+    }
+
+    /**
      * Sends data accumulated in buffer and clears it.
      */
     public function sendBuffer()
     {
-        $this->sendRaw($this->buffer);
+        $this->socket->writeRaw($this->buffer);
         unset($this->buffer);
-    }
-
-    /**
-     * Translates and sends unsigned integer as 8 bits.
-     *
-     * @param int $number Must be between 0 and 255.
-     */
-    public function sendOctet(int $number)
-    {
-        if($number > 255 || $number < 0){
-            throw new InvalidArgumentException(
-                'Number '.$number.' out of valid range of octet value. Valid range is 0 - 255.'
-            );
-        }
-
-        $binary = pack('C',$number);
-
-        if($this->accumulate){
-            $this->buffer .= $binary;
-        }else{
-            $this->sendRaw($binary);
-        }
-    }
-
-    /**
-     * Translates and sends unsigned integer as 16 bits.
-     *
-     * @param int $number Must be between 0 and 65535.
-     */
-    public function sendShort(int $number)
-    {
-        if($number > 65535 || $number < 0){
-            throw new InvalidArgumentException(
-                'Number '.$number.' out of valid range of short value. Valid range is 0 - 65535.'
-            );
-        }
-
-        $binary = pack('n',$number);
-
-        if($this->accumulate){
-            $this->buffer .= $binary;
-        }else{
-            $this->sendRaw($binary);
-        }
-    }
-
-    /**
-     * Translates and sends unsigned integer as 32 bits.
-     *
-     * @param int $number Must be between 0 and 2^32-1.
-     */
-    public function sendLong(int $number)
-    {
-        if($number > 4294967295 || $number < 0){
-            throw new InvalidArgumentException(
-                'Number '.$number.' out of valid range of long value. Valid range is 0 - 4 294 967 295.'
-            );
-        }
-
-        $binary = pack('N', $number);
-
-        if($this->accumulate){
-            $this->buffer .= $binary;
-        }else {
-            $this->sendRaw($binary);
-        }
-    }
-
-    public function sendFieldTable($dataArray)
-    {
-        foreach ($dataArray as $key => $valueWithType) {
-            $result =
-        }
     }
 
     /**
@@ -175,11 +144,124 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      */
     protected function retrieveFromBuffer(int $bytes): string
     {
-        if(!empty($this->buffer)){
-            $retrived = substr($this->buffer,0, $bytes );
+        if (!empty($this->buffer)) {
+            $retrieved = substr($this->buffer,0, $bytes);
             $this->buffer = substr($this->buffer, $bytes);
-            return $retrived;
+            return $retrieved;
         }
+    }
+
+    /**
+     * Translates and sends unsigned integer as 8 bits.
+     *
+     * @param int $number Must be between 0 and 255.
+     */
+    public function sendOctet(int $number)
+    {
+        if ($number > 255 || $number < 0) {
+            throw new InvalidArgumentException(
+                'Number '.$number.' out of valid range of octet value. Valid range is 0 - 255.'
+            );
+        }
+
+        $binary = chr($number);
+        $this->sendRaw($binary);
+    }
+
+    /**
+     * Translates and sends unsigned integer as 16 bits.
+     *
+     * @param int $number Must be between 0 and 65535.
+     */
+    public function sendShort(int $number)
+    {
+        if ($number > 65535 || $number < 0) {
+            throw new InvalidArgumentException(
+                'Number '.$number.' out of valid range of short value. Valid range is 0 - 65535.'
+            );
+        }
+
+        $binary = pack('n', $number);
+        $this->sendRaw($binary);
+    }
+
+    /**
+     * Translates and sends unsigned integer as 32 bits.
+     *
+     * @param int $number Must be between 0 and 2^32-1.
+     */
+    public function sendLong(int $number)
+    {
+        if ($number > 4294967295 || $number < 0) {
+            throw new InvalidArgumentException(
+                'Number '.$number.' out of valid range of long value. Valid range is 0 - 4 294 967 295.'
+            );
+        }
+
+        $binary = pack('N', $number);
+        $this->sendRaw($binary);
+    }
+
+    /**
+     * Sends string up to 256 bytes length.
+     *
+     * @param string $value
+     */
+    public function sendShortStr(string $value)
+    {
+        $length = strlen($value) > 255;
+        if ($length) {
+            throw new InvalidArgumentException(
+                "Short string is too big. It must be equal or less then 255 bytes long. 
+                {$length} bytes given.");
+        }
+
+        $this->sendOctet($length);
+        $this->sendRaw($value);
+    }
+
+    /**
+     * Sends strings up to 2^32 bits length.
+     *
+     * @param  string $value Value to be sent.
+     */
+    public function sendLongStr(string $value)
+    {
+        $length = strlen($value);
+        $limit = pow(2,32) - 1;
+        if ($length > $limit) {
+            throw new InvalidArgumentException(
+                'Long string is too big. It must be less than 2^32 bytes.'
+            );
+        }
+        $this->sendLong($length);
+        $this->sendRaw($value);
+
+    }
+
+    /**
+     * Translates php array into binary representation of AMQP field table
+     * and then sends it or accumulate in buffer. Values of source array are
+     * arrays first element of which are value type indicator
+     * (see MonsterMQ\Support\FieldType) and the second is values itself.
+     *
+     * @param array $dataArray Given array which will be translated.
+     *
+     * @throws PackerException
+     */
+    public function sendFieldTable(array $dataArray)
+    {
+        $binaryData = "";
+        foreach ($dataArray as $key => $valueWithType) {
+            $binaryData .= $this->tableValuePacker->packFieldTableValue('s', $key);
+            $binaryData .= $valueWithType[0];
+            $binaryData .= $this->tableValuePacker->packFieldTableValue($valueWithType[0], $valueWithType[1]);
+        }
+
+        $length = strlen($binaryData);
+        $this->sendLong($length);
+        $this->sendRaw($binaryData);
+
     }
 
     /**
@@ -206,11 +288,11 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     public function receiveOctet(): int
     {
         if($this->accumulate){
-            $binaryData = $this->retrirveFromBuffer(1);
+            $binaryData = $this->retrieveFromBuffer(1);
         }else{
             $binaryData = $this->receiveRaw(1);
         }
-        $translatedData = unpack('C',$binaryData);
+        $translatedData = unpack('C', $binaryData);
         return $translatedData[1];
     }
 
@@ -305,7 +387,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * @return array           Associative array representing
      * field table.
      */
-    public function receiveFieldTable($returnSize = false): array
+    public function receiveFieldTable($returnSize = false) :array
     {
         $tableSize = $this->receiveLong();
         //Size of size indicator also included
@@ -324,7 +406,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
             }
             //Add 1 octet as value type
             $readLength += 1;
-            $valueWithLength = $this->getFieldTableValue($valueType);
+            $valueWithLength = $this->tableValueUnpacker->getFieldTableValue($valueType);
             //Add length of Field Table value
             $readLength += $valueWithLength[1];
             $result[$key] = $valueWithLength[0];
@@ -339,12 +421,12 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Reads raw, untranslated data from network.
+     * Reads raw untranslated data from network.
      *
      * @param int $bytes Amount of data to read.
      * @return string    Untranslated raw data.
      */
-    public function receiveRaw($bytes): string
+    public function receiveRaw($bytes) :string
     {
         return $this->socket->readRaw($bytes);
     }
@@ -355,19 +437,14 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * @param string $data Data to be sent.
      * @return int         Amount of data has been sent.
      */
-    public function sendRaw($data): int
+    public function sendRaw(string $data): ?int
     {
+        if ($this->accumulate) {
+            $this->buffer .= $data;
+            return null;
+        }
         return $this->socket->writeRaw($data);
     }
 
-    /**
-     * Corrects byte order from little endian to network and vice versa.
-     *
-     * @param  string $binary
-     * @return string
-     */
-    public function correctByteOrder(string $binary): string
-    {
-        return $this->isLittleEndian ? strrev($binary) : $binary;
-    }
+
 }

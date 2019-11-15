@@ -1,17 +1,18 @@
 <?php
 
 
-namespace MonsterMQ\Classes;
+namespace MonsterMQ\AMQPDispatchers;
 
+use MonsterMQ\Connections\TableValuePacker;
 use MonsterMQ\Exceptions\ConnectionDispatcherException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
 use MonsterMQ\Interfaces\BinaryTransmitter;
-use MonsterMQ\Support\ValidateFrameDelimiter;
+use MonsterMQ\Support\FrameDelimiting;
 
 
 class ConnectionDispatcher implements ConnectionDispatcherInterface
 {
-    use ValidateFrameDelimiter;
+    use FrameDelimiting;
 
     /**
      * Binary transmitter instance.
@@ -66,14 +67,60 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
     }
 
     /**
-     * Select security mechanism and locale. This method selects a SASL security mechanism.
+     * Select security mechanism and locale.
      */
-    public function start_ok()
+    public function send_start_ok()
     {
         $this->transmitter->sendOctet(1);
         $this->transmitter->sendShort(0);
+
         $this->transmitter->enableBuffering();
-        $this->transmitter->
+        $this->transmitter->sendShort(static::CLASS_ID);
+        $this->transmitter->sendShort(static::START_OK_METHOD_ID);
+        $this->transmitter->sendFieldTable([
+            'product' => array('S', 'MonsterMQ'),
+            'platform' => array('S', 'PHP'),
+            'version' => array('S', '0.1.0'),
+            'copyright' => array('S', '')
+
+        ]);
+
+        $this->transmitter->sendShortStr('AMQPLAIN');
+
+        $packer = new TableValuePacker($this->transmitter);
+        $loginKey = $packer->packFieldTableValue('s','LOGIN');
+        $username = $packer->packFieldTableValue('S','guest');
+        $username = $loginKey.'S'.$username;
+
+        $passwordKey =  $packer->packFieldTableValue('s',"PASSWORD");
+        $password = $packer->packFieldTableValue('S','guest');
+        $password = $passwordKey.'S'.$password;
+
+        var_dump($username.$password);
+        $this->transmitter->sendLongStr($username.$password);
+
+        $this->transmitter->sendShortStr('en_US');
+
+        $this->transmitter->disableBuffering();
+        $this->transmitter->sendBufferLength();
+        var_dump($this->transmitter->getBufferContent());
+        $this->transmitter->sendBuffer();
+
+        $this->transmitter->sendOctet(0xCE);
+    }
+
+    public function receive_secure()
+    {
+        //var_dump($this->transmitter->receiveRaw(1));
+
+        $frameType = $this->transmitter->receiveOctet();
+        $channel = $this->transmitter->receiveShort();
+        $size = $this->transmitter->receiveLong();
+
+
+        //$response = $this->transmitter->receiveLongStr();
+        var_dump($frameType, $channel, $size);
+
     }
 
     public function secure_ok()

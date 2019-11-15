@@ -8,18 +8,18 @@ use MonsterMQ\Interfaces\AMQPClass;
 
 interface ConnectionDispatcher extends AMQPClass
 {
-    const SUPPORTED_MAJOR_VERSION = 0;
-    const SUPPORTED_MINOR_VERSION = 9;
+    public const SUPPORTED_MAJOR_VERSION = 0;
+    public const SUPPORTED_MINOR_VERSION = 9;
 
-    const CLASS_ID = 10;
+    public const CLASS_ID = 10;
 
-    const START_METHOD_ID = 10;
-    const START_OK_METHOD_ID = 11;
-    const SECURE_OK_METHOD_ID = 21;
-    const TUNE_OK_METHOD_ID = 31;
-    const OPEN_METHOD_ID = 40;
-    const CLOSE_METHOD_ID = 50;
-    const CLOSE_OK_METHOD_ID = 51;
+    public const START_METHOD_ID = 10;
+    public const START_OK_METHOD_ID = 11;
+    public const SECURE_OK_METHOD_ID = 21;
+    public const TUNE_OK_METHOD_ID = 31;
+    public const OPEN_METHOD_ID = 40;
+    public const CLOSE_METHOD_ID = 50;
+    public const CLOSE_OK_METHOD_ID = 51;
 
     /**
      * Receives Start method along with its arguments from server.

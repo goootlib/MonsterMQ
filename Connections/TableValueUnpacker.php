@@ -4,13 +4,17 @@
 namespace MonsterMQ\Connections;
 
 use http\Exception\InvalidArgumentException;
+use MonsterMQ\Interfaces\TableValueUnpacker as TableValueUnpackerInterface;
+use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Support\FieldType;
 
 /**
- * This trait adds parse logic of AMQP tables
- * to MonsterMQ\Connections\BinaryTransmitter class.
+ * This class translates binary field table values into corresponding PHP
+ * values.
+ *
  * @author Gleb Zhukov <goootlib@gmail.com>
  */
-trait FieldTableParser
+class TableValueUnpacker implements TableValueUnpackerInterface
 {
     protected $methodMap = [
         FieldType::BOOLEAN => 'getBoolean',
@@ -31,6 +35,18 @@ trait FieldTableParser
     ];
 
     /**
+     * Instance of binary transmitter.
+     *
+     * @var \MonsterMQ\Interfaces\BinaryTransmitter
+     */
+    protected $transmitter;
+
+    public function __construct(BinaryTransmitterInterface $transmitter)
+    {
+        $this->transmitter = $transmitter;
+    }
+
+    /**
      * Bits in AMQP are sent as octets. This function
      * fetches octet from network and then cast it to
      * boolean.
@@ -39,9 +55,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               1 byte.
      */
-    protected function getBoolean()
+    protected function getBoolean(): array
     {
-        return [(bool) $this->receiveBit(), 1];
+        return [(bool) $this->transmitter->receiveBit(), 1];
     }
 
     /**
@@ -51,12 +67,12 @@ trait FieldTableParser
      *               second - its size, which is always
      *               1 byte
      */
-    protected function getShortShortInt()
+    protected function getShortShortInt(): array
     {
-        if($this->accumulate){
-            $raw = $this->retrieveFromBuffer(1);
-        }else {
-            $raw = $this->receiveRaw(1);
+        if ($this->transmitter->bufferingEnabled()) {
+            $raw = $this->transmitter->retrieveFromBuffer(1);
+        } else {
+            $raw = $this->transmitter->receiveRaw(1);
         }
         $translated = unpack('c', $raw);
         return [$translated[1], 1];
@@ -69,9 +85,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               1 byte.
      */
-    protected function getShortShortUint()
+    protected function getShortShortUint(): array
     {
-        return [$this->receiveOctet(), 1];
+        return [$this->transmitter->receiveOctet(), 1];
     }
 
     /**
@@ -81,9 +97,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               2 bytes.
      */
-    protected function getShortInt()
+    protected function getShortInt(): array
     {
-        $unconverted = $this->receiveShort();
+        $unconverted = $this->transmitter->receiveShort();
         //Since php do not support Big-Endian signed shorts
         //we need to do this conversion by helper.
         $converted = NumberConverter::toSignedShort($unconverted);
@@ -97,9 +113,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               2 bytes.
      */
-    protected function getShortUint()
+    protected function getShortUint(): array
     {
-        return [$this->receiveShort(), 2];
+        return [$this->transmitter->receiveShort(), 2];
     }
 
     /**
@@ -109,9 +125,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               4 bytes.
      */
-    protected function getLongInt()
+    protected function getLongInt(): array
     {
-        $unconverted = $this->receiveLong();
+        $unconverted = $this->transmitter->receiveLong();
         //Since php do not support Big-Endian signed longs
         //we need to do this conversion by helper.
         $converted = NumberConverter::toSignedLong($unconverted);
@@ -125,9 +141,9 @@ trait FieldTableParser
      *               second - its size, which is always
      *               4 bytes.
      */
-    protected function getLongUint()
+    protected function getLongUint(): array
     {
-        return [$this->receiveLong(), 4];
+        return [$this->transmitter->receiveLong(), 4];
     }
 
     /**
@@ -137,12 +153,12 @@ trait FieldTableParser
      *               second - its size, which is always
      *               4 bytes.
      */
-    protected function getFloat()
+    protected function getFloat(): array
     {
-        if($this->accumulate){
-            $raw = $this->retrieveFromBuffer(4);
-        }else {
-            $raw = $this->receiveRaw(4);
+        if ($this->transmitter->bufferingEnabled()) {
+            $raw = $this->transmitter->retrieveFromBuffer(4);
+        } else {
+            $raw = $this->transmitter->receiveRaw(4);
         }
         $translated = unpack('G', $raw);
         return [$translated[1], 4];
@@ -155,12 +171,12 @@ trait FieldTableParser
      *               second - its size, which is always
      *               8 bytes.
      */
-    protected function getDouble()
+    protected function getDouble(): array
     {
-        if($this->accumulate){
-            $raw = $this->retrieveFromBuffer(8);
-        }else {
-            $raw = $this->receiveRaw(8);
+        if ($this->transmitter->bufferingEnabled()) {
+            $raw = $this->transmitter->retrieveFromBuffer(8);
+        } else {
+            $raw = $this->transmitter->receiveRaw(8);
         }
         $translated = unpack('E', $raw);
         return [$translated[1], 8];
@@ -173,10 +189,10 @@ trait FieldTableParser
      *               second - its size, which is always
      *               5 bytes.
      */
-    protected function getDecimal()
+    protected function getDecimal(): array
     {
-        $places = $this->receiveOctet();
-        $unconvertedLong = $this->receiveLong();
+        $places = $this->transmitter->receiveOctet();
+        $unconvertedLong = $this->transmitter->receiveLong();
         $unconvertedSignedLong = NumberConverter::toSignedLong($unconvertedLong);
         $converted = NumberConverter::toDecimal($places, $unconvertedSignedLong);
         return [$converted, 5];
@@ -189,10 +205,10 @@ trait FieldTableParser
      *               second - its size, which might be
      *               up to 256 bytes.
      */
-    protected function getShortString()
+    protected function getShortString(): array
     {
 
-        $data = $this->receiveShortStr();
+        $data = $this->transmitter->receiveShortStr();
         $length = strlen($data) + 1;
         return [$data, $length];
     }
@@ -203,9 +219,9 @@ trait FieldTableParser
      * @return array First element contains string,
      *               second - its size.
      */
-    protected function getLongString()
+    protected function getLongString(): array
     {
-        $data = $this->receiveLongStr();
+        $data = $this->transmitter->receiveLongStr();
         $length = strlen($data) + 4;
         return [$data, $length];
     }
@@ -217,9 +233,9 @@ trait FieldTableParser
      *               second - its size, which always
      *               8 byte.
      */
-    protected function getTimestamp()
+    protected function getTimestamp(): array
     {
-        return [$this->receiveLongLong(), 8];
+        return [$this->transmitter->receiveLongLong(), 8];
     }
 
     /**
@@ -228,15 +244,15 @@ trait FieldTableParser
      * @return array First element contains array,
      *               second - its size.
      */
-    protected function getFieldArray()
+    protected function getFieldArray(): array
     {
-        $length = $this->receiveLong();
+        $length = $this->transmitter->receiveLong();
         $read = 0;
         while ($read < $length) {
-            if($this->accumulate){
-                $valueType = $this->retrieveFromBuffer(1);
-            }else {
-                $valueType = $this->receiveRaw(1);
+            if ($this->transmitter->bufferingEnabled()) {
+                $valueType = $this->transmitter->retrieveFromBuffer(1);
+            } else {
+                $valueType = $this->transmitter->receiveRaw(1);
             }
             $read += 1;
             $valueWithSize = $this->getFieldTableValue($valueType);
@@ -251,24 +267,24 @@ trait FieldTableParser
      *
      * @return array
      */
-    protected function getFieldTable()
+    protected function getFieldTable(): array
     {
-         return $this->receiveFieldTable(true);
+         return $this->transmitter->receiveFieldTable(true);
     }
 
     /**
      * Fetches value along with value size from Field Table.
      *
      * @param string $valueType Type of Field Table value to fetch.
-     * @return array            First element contains value,
-     *                          second - its size.
+     *
+     * @return array|null First element contains value, second - its size.
      */
-    public function getFieldTableValue($valueType)
+    public function getFieldTableValue(string $valueType): ?array
     {
         $method = $this->methodMap[$valueType];
 
-        if($valueType == FieldType::VOID || !isset($method)){
-            return;
+        if ($valueType == FieldType::VOID || !isset($method)) {
+            return null;
         }
         $valueWithSize = $this->{$method}();
         return $valueWithSize;
