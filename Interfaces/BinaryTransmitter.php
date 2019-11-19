@@ -7,43 +7,6 @@ namespace MonsterMQ\Interfaces;
 interface BinaryTransmitter
 {
     /**
-     * Enables data buffering.
-     */
-    public function enableBuffering();
-
-    /**
-     * Disables data accumulation in buffer.
-     */
-    public function disableBuffering();
-
-    /**
-     * Whether buffering enabled or not.
-     *
-     * @return bool
-     */
-    public function bufferingEnabled(): bool;
-
-    /**
-     * Returns length of accumulated data.
-     *
-     * @return int
-     */
-    public function bufferLength(): int;
-
-
-    public function getBufferContent(): string;
-
-    /**
-     * Sends length of buffer through network.
-     */
-    public function sendBufferLength();
-
-    /**
-     * Sends data accumulated in buffer and clears it.
-     */
-    public function sendBuffer();
-
-    /**
      * Translates and sends unsigned integer as 8 bits.
      *
      * @param int $number Must be between 0 and 255.
@@ -72,9 +35,9 @@ interface BinaryTransmitter
     public function sendShortStr(string $value);
 
     /**
-     * Sends strings up to 2^64 bits length.
+     * Sends strings up to 2^32 bits length.
      *
-     * @param  string $value Value to be sent.
+     * @param string $value Value to be sent.
      */
     public function sendLongStr(string $value);
 
@@ -86,8 +49,8 @@ interface BinaryTransmitter
     public function sendFieldTable(array $dataArray);
 
     /**
-     * Receives bit from network. AMQP converts bits into bytes. So we need to
-     * do backward conversion.
+     * Receives byte from network. AMQP converts bits into bytes. So first we
+     * need to convert byte into bit.
      *
      * @return int Bit read from network.
      */
@@ -141,16 +104,58 @@ interface BinaryTransmitter
      * Receives Field Table parameter from server response.
      *
      * @param bool $returnSize Whether to return size of returning data.
-     * @return array           Associative array representing
-     * field table.
+     *
+     * @return array Associative array representing field table.
      */
     public function receiveFieldTable($returnSize = false): array;
+
+    /**
+     * Sends length of buffer through network as long value.
+     */
+    public function sendBufferLength();
+
+    /**
+     * Sends data accumulated in buffer and clears it.
+     */
+    public function sendBuffer();
+
+    /**
+     * Receives binary data into buffer.
+     *
+     * @param int $bytes Amount of data to be received.
+     */
+    public function receiveIntoBuffer(int $bytes);
+
+    /**
+     * Enables data buffering.
+     */
+    public function enableBuffering();
+
+    /**
+     * Disables data accumulation in buffer.
+     */
+    public function disableBuffering();
+
+    /**
+     * Whether buffering enabled or not.
+     *
+     * @return bool
+     */
+    public function bufferingEnabled(): bool;
+
+    /**
+     * Returns length of accumulated data.
+     *
+     * @return int
+     */
+    public function bufferLength(): int;
 
     /**
      * Reads raw, untranslated data from network.
      *
      * @param int $bytes Amount of data to read.
-     * @return string    Untranslated raw data.
+     *
+     * @return string Untranslated raw data.
      */
     public function receiveRaw(int $bytes): string;
 
@@ -158,7 +163,8 @@ interface BinaryTransmitter
      * Sends raw untranslated data through network.
      *
      * @param string $data Data to be sent.
-     * @return int         Amount of data has been sent.
+     *
+     * @return int Amount of data has been sent.
      */
     public function sendRaw(string $data): ?int;
 }

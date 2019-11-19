@@ -28,6 +28,6 @@ trait FrameDelimiting
      */
     public function sendFrameDelimiter()
     {
-        $this->transmitter->sendOctet(OxCE);
+        $this->transmitter->sendRaw("\xCE");
     }
 }

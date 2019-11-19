@@ -7,8 +7,18 @@ use MonsterMQ\Interfaces\TableValuePacker as TableValuePackerInterface;
 use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Support\FieldType;
 
+/**
+ * This class responsible for translating php arrays into AMQP field tables.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
 class TableValuePacker implements TableValuePackerInterface
 {
+    /**
+     * Map representing by which method which value type must be handled.
+     *
+     * @var array
+     */
     protected $methodMap = [
         FieldType::BOOLEAN => 'packBoolean',
         FieldType::SHORT_SHORT_INT => 'packShortShortInt',
@@ -27,6 +37,11 @@ class TableValuePacker implements TableValuePackerInterface
         FieldType::FIELD_TABLE => 'packFieldTable'
     ];
 
+    /**
+     * Binary transmitter instance.
+     *
+     * @var BinaryTransmitterInterface
+     */
     protected $transmitter;
 
     /**

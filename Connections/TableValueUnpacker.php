@@ -16,6 +16,11 @@ use MonsterMQ\Support\FieldType;
  */
 class TableValueUnpacker implements TableValueUnpackerInterface
 {
+    /**
+     * Map defining which table value will be handled by which method.
+     *
+     * @var array
+     */
     protected $methodMap = [
         FieldType::BOOLEAN => 'getBoolean',
         FieldType::SHORT_SHORT_INT => 'getShortShortInt',
@@ -47,13 +52,11 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     }
 
     /**
-     * Bits in AMQP are sent as octets. This function
-     * fetches octet from network and then cast it to
-     * boolean.
+     * Bits in AMQP are sent as octets. This function fetches octet from
+     * network and then cast it to boolean.
      *
-     * @return array First element contains boolean value,
-     *               second - its size, which is always
-     *               1 byte.
+     * @return array First element contains boolean value, second - its size,
+     *               which is always 1 byte.
      */
     protected function getBoolean(): array
     {
@@ -63,9 +66,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches short short signed integer.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               1 byte
+     * @return array First element contains number, second - its size, which is
+     *               always 1 byte.
      */
     protected function getShortShortInt(): array
     {
@@ -81,9 +83,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches short short unsigned integer.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               1 byte.
+     * @return array First element contains number, second - its size, which
+     *               is always 1 byte.
      */
     protected function getShortShortUint(): array
     {
@@ -93,9 +94,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches short signed integer.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               2 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 2 bytes.
      */
     protected function getShortInt(): array
     {
@@ -109,9 +109,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches short unsigned integer.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               2 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 2 bytes.
      */
     protected function getShortUint(): array
     {
@@ -121,9 +120,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches long signed integer.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               4 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 4 bytes.
      */
     protected function getLongInt(): array
     {
@@ -137,9 +135,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches long unsigned integer field.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               4 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 4 bytes.
      */
     protected function getLongUint(): array
     {
@@ -149,9 +146,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches float number field.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               4 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 4 bytes.
      */
     protected function getFloat(): array
     {
@@ -167,9 +163,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches double number field.
      *
-     * @return array First element contains number,
-     *               second - its size, which is always
-     *               8 bytes.
+     * @return array First element contains number, second - its size, which is
+     *               always 8 bytes.
      */
     protected function getDouble(): array
     {
@@ -185,9 +180,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches decimal field.
      *
-     * @return array First element contain number,
-     *               second - its size, which is always
-     *               5 bytes.
+     * @return array First element contain number, second - its size, which is
+     *               always 5 bytes.
      */
     protected function getDecimal(): array
     {
@@ -201,9 +195,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches short string field.
      *
-     * @return array First element contains string,
-     *               second - its size, which might be
-     *               up to 256 bytes.
+     * @return array First element contains string, second - its size, which
+     *               might be up to 256 bytes.
      */
     protected function getShortString(): array
     {
@@ -216,8 +209,7 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches long string field.
      *
-     * @return array First element contains string,
-     *               second - its size.
+     * @return array First element contains string, second - its size.
      */
     protected function getLongString(): array
     {
@@ -229,9 +221,8 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches timestamp field.
      *
-     * @return array First element contains timestamp,
-     *               second - its size, which always
-     *               8 byte.
+     * @return array First element contains timestamp second - its size, which
+     *               always 8 byte.
      */
     protected function getTimestamp(): array
     {
@@ -241,8 +232,7 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Fetches array field.
      *
-     * @return array First element contains array,
-     *               second - its size.
+     * @return array First element contains array, second - its size.
      */
     protected function getFieldArray(): array
     {
@@ -263,9 +253,9 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     }
 
     /**
-     * Fetches nested Field Table.
+     * Fetches nested AMQP Field Table.
      *
-     * @return array
+     * @return array Nested AMQP Field Table.
      */
     protected function getFieldTable(): array
     {
@@ -283,7 +273,13 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     {
         $method = $this->methodMap[$valueType];
 
-        if ($valueType == FieldType::VOID || !isset($method)) {
+        if (!isset($method)) {
+            throw new \InvalidArgumentException(
+                "Unsupported AMQP field table value type - {$valueType}"
+            );
+        }
+
+        if ($valueType == FieldType::VOID) {
             return null;
         }
         $valueWithSize = $this->{$method}();

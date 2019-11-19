@@ -96,41 +96,35 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
         $password = $packer->packFieldTableValue('S','guest');
         $password = $passwordKey.'S'.$password;
 
-        var_dump($username.$password);
         $this->transmitter->sendLongStr($username.$password);
 
         $this->transmitter->sendShortStr('en_US');
 
         $this->transmitter->disableBuffering();
         $this->transmitter->sendBufferLength();
-        var_dump($this->transmitter->getBufferContent());
         $this->transmitter->sendBuffer();
 
         $this->transmitter->sendOctet(0xCE);
     }
 
-    public function receive_secure()
+    public function receive_tune()
     {
-        //var_dump($this->transmitter->receiveRaw(1));
-
         $frameType = $this->transmitter->receiveOctet();
         $channel = $this->transmitter->receiveShort();
         $size = $this->transmitter->receiveLong();
+        $class = $this->transmitter->receiveShort();
+        $method = $this->transmitter->receiveShort();
+        $channelMax = $this->transmitter->receiveShort();
+        $frameMax = $this->transmitter->receiveLong();
+        $heartbeat = $this->transmitter->receiveShort();
+        $this->validateFrameDelimiter();
 
-
-        //$response = $this->transmitter->receiveLongStr();
-        var_dump($frameType, $channel, $size);
-
-    }
-
-    public function secure_ok()
-    {
-        // TODO: Implement secure_ok() method.
+        var_dump($channelMax,$frameMax, $heartbeat);
     }
 
     public function tune_ok()
     {
-        // TODO: Implement tune_ok() method.
+
     }
 
     public function open()

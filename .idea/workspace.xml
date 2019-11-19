@@ -2,19 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="757c743f-01cd-459c-8f8a-c48533e9aac4" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/MonsterMQ.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MonsterMQ.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" beforeDir="false" afterPath="$PROJECT_DIR$/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/BinaryTransmitter.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Connections/FieldTablePacker.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValuePacker.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Connections/FieldTableParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValueUnpacker.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Connections/Stream.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/Stream.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interfaces/AMQPClass.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/AMQPClass.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/AMQPDispatchers/ConnectionDispatcher.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/TableValuePacker.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValuePacker.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Connections/TableValueUnpacker.php" beforeDir="false" afterPath="$PROJECT_DIR$/Connections/TableValueUnpacker.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Interfaces/BinaryTransmitter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Interfaces/BinaryTransmitter.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Support/ValidateFrameDelimiter.php" beforeDir="false" afterPath="$PROJECT_DIR$/Support/FrameDelimiting.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/composer.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Support/FrameDelimiting.php" beforeDir="false" afterPath="$PROJECT_DIR$/Support/FrameDelimiting.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/connect.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -167,6 +161,8 @@
       <workItem from="1573629444394" duration="9168000" />
       <workItem from="1573715717637" duration="8803000" />
       <workItem from="1573802373743" duration="9646000" />
+      <workItem from="1574061370842" duration="6321000" />
+      <workItem from="1574149288925" duration="4659000" />
     </task>
     <servers />
   </component>
