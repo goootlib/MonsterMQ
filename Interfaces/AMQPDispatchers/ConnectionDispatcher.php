@@ -16,44 +16,42 @@ interface ConnectionDispatcher extends AMQPClass
     public const START_METHOD_ID = 10;
     public const START_OK_METHOD_ID = 11;
     public const SECURE_OK_METHOD_ID = 21;
+    public const TUNE_METHOD_ID = 30;
     public const TUNE_OK_METHOD_ID = 31;
     public const OPEN_METHOD_ID = 40;
     public const CLOSE_METHOD_ID = 50;
     public const CLOSE_OK_METHOD_ID = 51;
 
+    public const PEER_PROPERTIES = [
+        'product' => ['S', 'MonsterMQ'],
+        'platform' => ['S', 'PHP'],
+        'version' => ['S', '0.1.0'],
+        'copyright' => ['S', '']
+
+    ];
+
     /**
-     * Receives Start method along with its arguments from server.
-     *
-     * @return mixed
+     * Receives Start AMQP method along with its arguments from server.
      */
     public function receive_start();
 
     /**
-     * Select security mechanism and locale. This method selects a SASL
-     * security mechanism.
-     *
-     * @return mixed
+     * Select security mechanism and locale. This method also selects a SASL
+     * security mechanism and passes credentials.
      */
-    //public function send_start_ok();
+    public function send_start_ok(string $securityMechanism, string $username, string $password, string $locale);
 
     /**
-     * Security mechanism challenge. The SASL protocol works by exchanging
-     * challenges and responses until both peers have received sufficient
-     * information to authenticate each other. This method challenges the
-     * client to provide more information.
-     *
-     * @return mixed
+     * Receive Tune AMQP method along with its arguments.
      */
-    //public function send_secure_ok();
+    public function receive_tune();
 
     /**
      * Negotiate connection tuning parameters.This method sends the client's
      * connection tuning parameters to the server. Certain fields are
      * negotiated, others provide capability information.
-     *
-     * @return mixed
      */
-    //public function send_tune_ok();
+    public function send_tune_ok(int $channelMax, int $frameMax, int $heartbeat);
 
     /**
      * Open connection to virtual host. This method opens a connection to a

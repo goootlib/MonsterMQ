@@ -15,9 +15,16 @@ try {
 
 	$connection->receive_start();
 
-	$connection->send_start_ok();
+	//Принять аргументы из receive_start
+	$connection->send_start_ok('AMQPLAIN', 'guest','guest','en_US');
 
-	$connection->receive_tune();
+    $tuningParameters = $connection->receive_tune();
+
+	$connection->send_tune_ok(
+	    $tuningParameters['channelMax'],
+        $tuningParameters['frameMax'],
+        $tuningParameters['heartbeat']
+    );
     echo '</pre>';
 }catch (\Exception $e) {
     echo $e->getMessage();
