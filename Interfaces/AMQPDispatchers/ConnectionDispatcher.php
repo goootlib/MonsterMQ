@@ -5,6 +5,7 @@ namespace MonsterMQ\Interfaces\AMQPDispatchers;
 
 
 use MonsterMQ\Interfaces\AMQPClass;
+use MonsterMQ\Exceptions\PackerException;
 
 interface ConnectionDispatcher extends AMQPClass
 {
@@ -31,38 +32,63 @@ interface ConnectionDispatcher extends AMQPClass
     ];
 
     /**
-     * Receives Start AMQP method along with its arguments from server.
+     * Receives Start AMQP method along with its arguments from server. This
+     * arguments propose authentication method, locale and also server peer
+     * properties.
      */
     public function receive_start();
 
     /**
      * Select security mechanism and locale. This method also selects a SASL
      * security mechanism and passes credentials.
+     *
+     * @param string $securityMechanism MonsterMQ supports PLAIN and AMQPLAIN mechanisms.
+     * @param string $username          Account name.
+     * @param string $password          Password for given account name.
+     * @param string $locale            Locale which will be used during session.
+     *
+     * @throws PackerException In case of unsupported field table type encounter.
      */
     public function send_start_ok(string $securityMechanism, string $username, string $password, string $locale);
 
     /**
-     * Receive Tune AMQP method along with its arguments.
+     * Receive Tune AMQP method along with its arguments. This arguments
+     * propose such session parameters as maximum channels number, maximum
+     * frame size, and heartbeat timeout.
      */
     public function receive_tune();
 
     /**
-     * Negotiate connection tuning parameters.This method sends the client's
+     * This method sends the client's
      * connection tuning parameters to the server. Certain fields are
      * negotiated, others provide capability information.
+     *
+     * @param int $channelMax Maximum number of channels to negotiate.
+     * @param int $frameMax   Maximum size of frame to negotiate.
+     * @param int $heartbeat  This argument represents time within each
+     *                        heartbeat frame must be sent in oder to keep
+     *                        connection with server alive, if there was no
+     *                        other sendings to the server. If there was no
+     *                        sendings to or from server peer should close the
+     *                        connection.
      */
     public function send_tune_ok(int $channelMax, int $frameMax, int $heartbeat);
 
     /**
-     * Open connection to virtual host. This method opens a connection to a
+     * This method opens a connection to a
      * virtual host, which is a collection of resources, and acts to separate
      * multiple application domains within a server. The server may apply
      * arbitrary limits per virtual host, such as the number of each type of
      * entity that may be used, per connection and/or in total.
      *
-     * @return mixed
+     * @param string $path Virtual host to choose.
      */
-    //public function send_open();
+    public function send_open(string $path);
+
+    /**
+     * This method signals to the client that the connection is ready for use.
+     */
+    public function receive_open_ok();
 
     /**
      * Request a connection close.This method indicates that the sender wants

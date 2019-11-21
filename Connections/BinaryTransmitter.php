@@ -26,7 +26,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Instance of socket connection which provide API for sending and
      * receiving raw data.
      *
-     * @var \MonsterMQ\Interfaces\Stream
+     * @var StreamInterface
      */
     protected $socket;
 
@@ -42,7 +42,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Field table value packer instance responsible for translating PHP arrays
      * into AMQP field tables.
      *
-     * @var TableValuePacker
+     * @var TableValuePackerInterface
      */
     public $tableValuePacker;
 
@@ -61,6 +61,20 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      */
     protected $buffer = "";
 
+    /**
+     * Internal pointer which indicates current position of buffer handling.
+     *
+     * @var int
+     */
+    protected $bufferPointer = 0;
+
+    /**
+     * BinaryTransmitter constructor.
+     *
+     * @param StreamInterface $socket
+     * @param TableValueUnpackerInterface|null $unpacker
+     * @param TableValuePackerInterface|null $packer
+     */
     public function __construct(
         StreamInterface $socket,
         TableValueUnpackerInterface $unpacker = null,
@@ -73,7 +87,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends or accumulate in buffer unsigned integer as 8 bits.
+     * Sends or stores in buffer unsigned integer as 8 bits.
      *
      * @param int $number Must be between 0 and 255.
      */
@@ -91,7 +105,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends or accumulate in buffer unsigned integer as 16 bits.
+     * Sends or stores in buffer unsigned integer as 16 bits.
      *
      * @param int $number Must be between 0 and 65535.
      */
@@ -109,7 +123,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends or accumulate in buffer unsigned integer as 32 bits.
+     * Sends or stores in buffer unsigned integer as 32 bits.
      *
      * @param int $number Must be between 0 and 2^32-1.
      */
@@ -127,9 +141,9 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends or accumulate in buffer string up to 256 bytes length.
+     * Sends or stores in buffer strings up to 256 bytes length.
      *
-     * @param string $value
+     * @param string $value String to be sent.
      */
     public function sendShortStr(string $value)
     {
@@ -145,9 +159,9 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends or accumulate in buffer strings up to 2^32 bits length.
+     * Sends or stores in buffer strings up to 2^32 bits length.
      *
-     * @param string $value Value to be sent.
+     * @param string $value String to be sent.
      */
     public function sendLongStr(string $value)
     {
@@ -190,7 +204,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
 
     /**
      * Receives byte from network or from buffer. AMQP converts bits into
-     * bytes. So we need to do backward conversion.
+     * bytes. So we supposed to do backward conversion.
      *
      * @return int Translated bit.
      */
@@ -206,7 +220,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Receives 8 bits from network or buffer and translates it to unsigned
      * integer.
      *
-     * @return int
+     * @return int Translated octet.
      */
     public function receiveOctet(): int
     {
@@ -220,7 +234,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Receives 16 bits from network or buffer and translates it to unsigned
      * integer.
      *
-     * @return int
+     * @return int Translated short integer.
      */
     public function receiveShort(): int
     {
@@ -234,7 +248,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Receives 32 bits from network or buffer and translates it to unsigned
      * integer.
      *
-     * @return int
+     * @return int Translated long integer.
      */
     public function receiveLong(): int
     {
@@ -248,7 +262,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Receives 64 bits from network or buffer and translates it to unsigned
      * integer.
      *
-     * @return int
+     * @return int Translated long long integer.
      */
     public function receiveLongLong(): int
     {
@@ -263,7 +277,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      * Short string type contains first octet which indicates the length of
      * string.
      *
-     * @return string
+     * @return string Translated short string.
      */
     public function receiveShortStr(): string
     {
@@ -275,10 +289,10 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Reads 2^32 maximum length string. Long strings contain first 32 bits
+     * Reads 2^32 bit maximum length string. Long strings contain first 32 bits
      * indicating the length of string.
      *
-     * @return string
+     * @return string Translated long string.
      */
     public function receiveLongStr(): string
     {
@@ -289,13 +303,13 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Receives Field Table parameter from server response.
+     * Receives and parses Field Table parameter from server response.
      *
      * @param bool $returnSize Whether to return size of returning data.
      *
      * @return array Associative array representing AMQP field table.
      */
-    public function receiveFieldTable($returnSize = false) :array
+    public function receiveFieldTable(bool $returnSize = false) :array
     {
         $tableSize = $this->receiveLong();
         //Size of size indicator also included
@@ -325,15 +339,6 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends length of buffer through network.
-     */
-    public function sendBufferLength()
-    {
-        $transmitter = new BinaryTransmitter($this->socket);
-        $transmitter->sendLong($this->bufferLength());
-    }
-
-    /**
      * Sends data accumulated in buffer and clears it.
      */
     public function sendBuffer()
@@ -345,14 +350,15 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     /**
      * Retrieves data from internal buffer.
      *
-     * @param  int    $bytes Amount of data to retrieve in bytes.
-     * @return string|null
+     * @param int $bytes Amount of data to retrieve in bytes.
+     *
+     * @return string|null Retreived data from buffer. Null if buffer is empty.
      */
     protected function retrieveFromBuffer(int $bytes): ?string
     {
-        if (!empty($this->buffer)) {
-            $retrieved = substr($this->buffer,0, $bytes);
-            $this->buffer = substr($this->buffer, $bytes);
+        if (!empty($this->buffer) && (($this->bufferPointer + $bytes) <= $this->bufferLength())) {
+            $retrieved = substr($this->buffer, $this->bufferPointer, $bytes);
+            $this->bufferPointer += $bytes;
             return $retrieved;
         } else {
             return null;
@@ -378,7 +384,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Disables data accumulation in buffer.
+     * Disables data buffering.
      */
     public function disableBuffering()
     {
@@ -388,7 +394,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     /**
      * Whether buffering enabled or not.
      *
-     * @return bool
+     * @return bool Indicates whether buffering enabled.
      */
     public function bufferingEnabled(): bool
     {
@@ -398,7 +404,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     /**
      * Returns size of data accumulated in buffer.
      *
-     * @return int
+     * @return int Size of data accumulated in buffer.
      */
     public function bufferLength(): int
     {
@@ -406,10 +412,11 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Reads raw untranslated data from network.
+     * Reads raw untranslated data from network or internal buffer.
      *
      * @param int $bytes Amount of data to read.
-     * @return string    Untranslated raw data.
+     *
+     * @return string Untranslated raw data.
      */
     public function receiveRaw(int $bytes) :string
     {
@@ -420,10 +427,11 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
-     * Sends raw untranslated data through network.
+     * Sends raw untranslated data through network or accumulates it in buffer.
      *
-     * @param string $data Data to be sent.
-     * @return int         Amount of data has been sent.
+     * @param string $data Data to be sent or accumulated.
+     *
+     * @return int Amount of data has been sent or accumulated.
      */
     public function sendRaw(string $data): ?int
     {

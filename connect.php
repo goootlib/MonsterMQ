@@ -25,7 +25,15 @@ try {
         $tuningParameters['frameMax'],
         $tuningParameters['heartbeat']
     );
+
+	$connection->send_open();
     echo '</pre>';
+    /*
+    $producer->newDirectExange('name')->setPersistent()->declare();
+    $producer->newFanoutExange('another name')->setPersistent()->declare();
+    $producer->newTopicExange('yet another name')->setPersistent()->declare();
+    $producer->newQueue('queue name')->declare()->bind('binding name');
+    */
 }catch (\Exception $e) {
     echo $e->getMessage();
 }

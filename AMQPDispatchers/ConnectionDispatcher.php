@@ -23,13 +23,22 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      */
     protected $transmitter;
 
+    /**
+     * Authentication strategy. PLAIN and AMQPLAIN supported.
+     *
+     * @var
+     */
+    public $authStrategy;
+
     public function __construct(BinaryTransmitter $transmitter)
     {
         $this->transmitter = $transmitter;
     }
 
     /**
-     * Receives Start AMQP method along with its arguments from server.
+     * Receives Start AMQP method along with its arguments from server. This
+     * arguments propose authentication method, locale and also server peer
+     * properties.
      */
     public function receive_start()
     {
@@ -73,11 +82,13 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
             );
         }
 
-        $mechanisms = explode(" ", $mechanisms);
-        if(!in_array("PLAIN", $mechanisms) && !in_array("AMQPLAIN", $mechanisms)){
-            throw new ConnectionDispatcherException('There are no supported security mechanisms.');
-        }
         $this->validateFrameDelimiter();
+
+        return [
+            'peerProperties' => $peerProperties,
+            'mechanisms' => $mechanisms,
+            'locales' => $locales
+        ];
     }
 
     /**
@@ -120,14 +131,15 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
         $this->transmitter->sendShortStr($locale);
 
         $this->transmitter->disableBuffering();
-        $this->transmitter->sendBufferLength();
+        $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
-
         $this->transmitter->sendOctet(0xCE);
     }
 
     /**
-     * Receive Tune AMQP method along with its arguments.
+     * Receive Tune AMQP method along with its arguments. This arguments
+     * propose such session parameters as maximum channels number, maximum
+     * frame size, and heartbeat timeout.
      */
     public function receive_tune()
     {
@@ -163,24 +175,60 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      * Negotiate connection tuning parameters.This method sends the client's
      * connection tuning parameters to the server. Certain fields are
      * negotiated, others provide capability information.
+     *
+     * @param int $channelMax Maximum number of channels to negotiate.
+     * @param int $frameMax   Maximum size of frame to negotiate.
+     * @param int $heartbeat  This argument represents time within each
+     *                        heartbeat frame must be sent in oder to keep
+     *                        connection with server alive, if there was no
+     *                        other sendings to the server. If there was no
+     *                        sendings to or from server peer should close the
+     *                        connection.
      */
     public function send_tune_ok(int $channelMax, int $frameMax, int $heartbeat)
     {
         $this->transmitter->sendOctet(1);
         $this->transmitter->sendShort(0);
         $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(10);
+        $this->transmitter->sendShort(31);
         $this->transmitter->sendShort($channelMax);
         $this->transmitter->sendLong($frameMax);
         $this->transmitter->sendShort($heartbeat);
         $this->transmitter->disableBuffering();
-        $this->transmitter->sendBufferLength();
+        $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
         $this->sendFrameDelimiter();
     }
 
-    public function open()
+    /**
+     * This method opens a connection to a
+     * virtual host, which is a collection of resources, and acts to separate
+     * multiple application domains within a server. The server may apply
+     * arbitrary limits per virtual host, such as the number of each type of
+     * entity that may be used, per connection and/or in total.
+     *
+     * @param string $path Virtual host to choose.
+     */
+    public function send_open(string $path = '/')
     {
-        // TODO: Implement open() method.
+        $this->transmitter->sendOctet(1);
+        $this->transmitter->sendShort(0);
+        $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(10);
+        $this->transmitter->sendShort(40);
+        $this->transmitter->sendShortStr($path);
+        $this->transmitter->sendShortStr('');
+        $this->transmitter->sendOctet(0);
+        $this->transmitter->disableBuffering();
+        $this->transmitter->sendLong($this->transmitter->bufferLength());
+        $this->transmitter->sendBuffer();
+        $this->sendFrameDelimiter();
+    }
+
+    public function receive_open_ok()
+    {
+
     }
 
     public function close()

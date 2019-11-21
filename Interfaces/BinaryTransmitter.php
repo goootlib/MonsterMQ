@@ -107,12 +107,7 @@ interface BinaryTransmitter
      *
      * @return array Associative array representing field table.
      */
-    public function receiveFieldTable($returnSize = false): array;
-
-    /**
-     * Sends length of buffer through network as long value.
-     */
-    public function sendBufferLength();
+    public function receiveFieldTable(bool $returnSize = false): array;
 
     /**
      * Sends data accumulated in buffer and clears it.
