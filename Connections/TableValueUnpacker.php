@@ -46,6 +46,11 @@ class TableValueUnpacker implements TableValueUnpackerInterface
      */
     protected $transmitter;
 
+    /**
+     * TableValueUnpacker constructor.
+     *
+     * @param BinaryTransmitterInterface $transmitter
+     */
     public function __construct(BinaryTransmitterInterface $transmitter)
     {
         $this->transmitter = $transmitter;

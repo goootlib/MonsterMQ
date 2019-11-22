@@ -11,7 +11,15 @@ use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispa
 use MonsterMQ\Interfaces\BinaryTransmitter;
 use MonsterMQ\Support\FrameDelimiting;
 
-
+/**
+ * Class ConnectionDispatcher responsible for authentication, setting session
+ * properties, managing connection on application layer and so forth. It uses
+ * it's own naming convention to comply existing AMQP method naming convention.
+ * It uses prefixes like "send" and "receive" (to indicate whether it receives
+ * or sends AMQP method) followed by names of AMQP methods.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
 class ConnectionDispatcher implements ConnectionDispatcherInterface
 {
     use FrameDelimiting;
@@ -30,6 +38,11 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      */
     public $authStrategy;
 
+    /**
+     * ConnectionDispatcher constructor.
+     *
+     * @param BinaryTransmitter $transmitter
+     */
     public function __construct(BinaryTransmitter $transmitter)
     {
         $this->transmitter = $transmitter;
@@ -40,7 +53,7 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      * arguments propose authentication method, locale and also server peer
      * properties.
      */
-    public function receive_start()
+    public function receive_start(): array
     {
         $this->transmitter->sendRaw("AMQP\x0\x0\x9\x1");
         //Receive frame header
@@ -92,9 +105,8 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
     }
 
     /**
-     * Select security mechanism and locale.
+     * Selects security mechanism and locale.
      *
-     * @param string $securityMechanism MonsterMQ supports PLAIN and AMQPLAIN mechanisms.
      * @param string $username          Account name.
      * @param string $password          Password for given account name.
      * @param string $locale            Locale which will be used during session.
@@ -102,12 +114,11 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      * @throws PackerException In case of unsupported field table type encounter.
      */
     public function send_start_ok(
-        string $securityMechanism,
         string $username,
         string $password,
-        string $locale
+        string $locale = 'en_US'
     ){
-        $this->transmitter->sendOctet(1);
+        $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(0);
 
         $this->transmitter->enableBuffering();
@@ -115,25 +126,16 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
         $this->transmitter->sendShort(static::START_OK_METHOD_ID);
         $this->transmitter->sendFieldTable(static::PEER_PROPERTIES);
 
-        $this->transmitter->sendShortStr($securityMechanism);
+        $this->transmitter->sendShortStr($this->authStrategy::AUTH_TYPE_NAME);
 
-        $packer = new TableValuePacker($this->transmitter);
-        $usernameKey = $packer->packFieldTableValue('s','LOGIN');
-        $username = $packer->packFieldTableValue('S',$username);
-        $username = $usernameKey.'S'.$username;
-
-        $passwordKey =  $packer->packFieldTableValue('s',"PASSWORD");
-        $password = $packer->packFieldTableValue('S',$password);
-        $password = $passwordKey.'S'.$password;
-
-        $this->transmitter->sendLongStr($username.$password);
+        $this->authStrategy->execute($this, $username, $password);
 
         $this->transmitter->sendShortStr($locale);
 
         $this->transmitter->disableBuffering();
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
-        $this->transmitter->sendOctet(0xCE);
+        $this->sendFrameDelimiter();
     }
 
     /**
@@ -141,14 +143,14 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      * propose such session parameters as maximum channels number, maximum
      * frame size, and heartbeat timeout.
      */
-    public function receive_tune()
+    public function receive_tune(): array
     {
         $frameType = $this->transmitter->receiveOctet();
         $channel = $this->transmitter->receiveShort();
         if ($frameType !== static::METHOD_FRAME_TYPE || $channel !== 0) {
             throw new ProtocolException(
-                'Unexpected frame type or chanell number on receiving 
-                Connection.Tune method.'
+                "Unexpected frame type or channel number on receiving 
+                Connection.tune method."
             );
         }
         $size = $this->transmitter->receiveLong();
@@ -165,8 +167,8 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
         $this->validateFrameDelimiter();
 
         return [
-            "channelMax" => $channelMax,
-            "frameMax" => $frameMax,
+            "channelMaxNumber" => $channelMax,
+            "frameMaxSize" => $frameMax,
             "heartbeat" => $heartbeat
         ];
     }
@@ -185,15 +187,15 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
      *                        sendings to or from server peer should close the
      *                        connection.
      */
-    public function send_tune_ok(int $channelMax, int $frameMax, int $heartbeat)
+    public function send_tune_ok(int $channelMaxNumber, int $frameMaxSize, int $heartbeat)
     {
-        $this->transmitter->sendOctet(1);
+        $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(0);
         $this->transmitter->enableBuffering();
-        $this->transmitter->sendShort(10);
-        $this->transmitter->sendShort(31);
-        $this->transmitter->sendShort($channelMax);
-        $this->transmitter->sendLong($frameMax);
+        $this->transmitter->sendShort(static::CLASS_ID);
+        $this->transmitter->sendShort(static::TUNE_OK_METHOD_ID);
+        $this->transmitter->sendShort($channelMaxNumber);
+        $this->transmitter->sendLong($frameMaxSize);
         $this->transmitter->sendShort($heartbeat);
         $this->transmitter->disableBuffering();
         $this->transmitter->sendLong($this->transmitter->bufferLength());
@@ -202,23 +204,25 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
     }
 
     /**
-     * This method opens a connection to a
-     * virtual host, which is a collection of resources, and acts to separate
-     * multiple application domains within a server. The server may apply
-     * arbitrary limits per virtual host, such as the number of each type of
-     * entity that may be used, per connection and/or in total.
+     * This method opens a connection to a virtual host, which is a collection
+     * of resources, and acts to separate multiple application domains within
+     * a server. The server may apply arbitrary limits per virtual host, such
+     * as the number of each type of entity that may be used, per connection
+     * and/or in total.
      *
      * @param string $path Virtual host to choose.
      */
     public function send_open(string $path = '/')
     {
-        $this->transmitter->sendOctet(1);
+        $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(0);
         $this->transmitter->enableBuffering();
-        $this->transmitter->sendShort(10);
-        $this->transmitter->sendShort(40);
+        $this->transmitter->sendShort(static::CLASS_ID);
+        $this->transmitter->sendShort(static::OPEN_METHOD_ID);
         $this->transmitter->sendShortStr($path);
+        //following short string reserved by AMQP, now its value makes no sense
         $this->transmitter->sendShortStr('');
+        //following octet reserved by AMQP, now its value makes no sense
         $this->transmitter->sendOctet(0);
         $this->transmitter->disableBuffering();
         $this->transmitter->sendLong($this->transmitter->bufferLength());
@@ -226,9 +230,31 @@ class ConnectionDispatcher implements ConnectionDispatcherInterface
         $this->sendFrameDelimiter();
     }
 
+    /**
+     * This method signals to the client that the connection is ready for use.
+     *
+     * @throws ProtocolException
+     */
     public function receive_open_ok()
     {
-
+        $frameType = $this->transmitter->receiveOctet();
+        $channel = $this->transmitter->receiveShort();
+        if ($frameType !== static::METHOD_FRAME_TYPE || $channel !== 0) {
+            throw new ProtocolException(
+                "Unexpected frame type or channel number on receiving 
+                Connection.open_ok method."
+            );
+        }
+        $size = $this->transmitter->receiveLong();
+        $classId = $this->transmitter->receiveShort();
+        $methodId = $this->transmitter->receiveShort();
+        if($classId !== static::CLASS_ID || $methodId !== static::OPEN_OK_METHOD_ID) {
+            throw new ProtocolException(
+                "Unexpected method frame. Expecting class id '10' and method 
+                id '41'. '{$classId}' and '{$methodId}' given.");
+        }
+        $this->transmitter->receiveShortStr();
+        $this->validateFrameDelimiter();
     }
 
     public function close()

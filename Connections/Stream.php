@@ -87,13 +87,12 @@ class Stream implements StreamInterface
     protected $contextAvailable = false;
 
     /**
-     * Close connection of object deleting.
+     * Close connection on object deleting.
      */
     public function __destruct()
     {
         $this->close();
     }
-
 
     /**
      * Sets reading/writing timeout after which reading

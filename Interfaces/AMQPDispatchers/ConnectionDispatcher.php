@@ -20,6 +20,7 @@ interface ConnectionDispatcher extends AMQPClass
     public const TUNE_METHOD_ID = 30;
     public const TUNE_OK_METHOD_ID = 31;
     public const OPEN_METHOD_ID = 40;
+    public const OPEN_OK_METHOD_ID = 41;
     public const CLOSE_METHOD_ID = 50;
     public const CLOSE_OK_METHOD_ID = 51;
 
@@ -36,27 +37,26 @@ interface ConnectionDispatcher extends AMQPClass
      * arguments propose authentication method, locale and also server peer
      * properties.
      */
-    public function receive_start();
+    public function receive_start(): array;
 
     /**
      * Select security mechanism and locale. This method also selects a SASL
      * security mechanism and passes credentials.
      *
-     * @param string $securityMechanism MonsterMQ supports PLAIN and AMQPLAIN mechanisms.
      * @param string $username          Account name.
      * @param string $password          Password for given account name.
      * @param string $locale            Locale which will be used during session.
      *
      * @throws PackerException In case of unsupported field table type encounter.
      */
-    public function send_start_ok(string $securityMechanism, string $username, string $password, string $locale);
+    public function send_start_ok(string $username, string $password, string $locale);
 
     /**
      * Receive Tune AMQP method along with its arguments. This arguments
      * propose such session parameters as maximum channels number, maximum
      * frame size, and heartbeat timeout.
      */
-    public function receive_tune();
+    public function receive_tune(): array;
 
     /**
      * This method sends the client's

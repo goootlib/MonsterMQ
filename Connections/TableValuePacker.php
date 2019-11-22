@@ -51,6 +51,11 @@ class TableValuePacker implements TableValuePackerInterface
      */
     protected $isLittleEndian;
 
+    /**
+     * TableValuePacker constructor.
+     *
+     * @param BinaryTransmitterInterface $transmitter
+     */
     public function __construct(BinaryTransmitterInterface $transmitter)
     {
         $this->transmitter = $transmitter;

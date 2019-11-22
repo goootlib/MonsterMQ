@@ -29,10 +29,12 @@ try {
 	$connection->send_open();
     echo '</pre>';
     /*
-    $producer->newDirectExange('name')->setPersistent()->declare();
-    $producer->newFanoutExange('another name')->setPersistent()->declare();
-    $producer->newTopicExange('yet another name')->setPersistent()->declare();
+    $producer->newDirectExchange('name')->setPersistent()->declare();
+    $producer->newFanoutExchange('another name')->setPersistent()->declare();
+    $producer->newTopicExchange('yet another name')->setPersistent()->declare();
     $producer->newQueue('queue name')->declare()->bind('binding name');
+	$producer->defaultRoutingKey('routing key');
+    $producer->overrideDefaultExchange('exchange name');
     */
 }catch (\Exception $e) {
     echo $e->getMessage();
