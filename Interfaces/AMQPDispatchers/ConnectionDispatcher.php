@@ -1,13 +1,10 @@
 <?php
 
-
 namespace MonsterMQ\Interfaces\AMQPDispatchers;
 
-
-use MonsterMQ\Interfaces\AMQPClass;
 use MonsterMQ\Exceptions\PackerException;
 
-interface ConnectionDispatcher extends AMQPClass
+interface ConnectionDispatcher extends AMQP
 {
     public const SUPPORTED_MAJOR_VERSION = 0;
     public const SUPPORTED_MINOR_VERSION = 9;
@@ -99,17 +96,17 @@ interface ConnectionDispatcher extends AMQPClass
      * sending this method, any received methods except Close and Close-OK MUST
      * be discarded. The response to receiving a Close after sending Close must
      * be to send Close-Ok.
-     *
-     * @return mixed
      */
-    //public function send_close();
+    public function send_close(int $replyCode, string $replyText, int $classId, int $methodId);
 
     /**
      * Confirm a connection close.This method confirms a Connection.Close
      * method and tells the recipient that it is safe to release resources for
      * the connection and close the socket.
-     *
-     * @return mixed
      */
-    //public function send_close_ok();
+    public function send_close_ok();
+
+    public function receive_close();
+
+    public function receive_close_ok();
 }

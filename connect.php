@@ -11,30 +11,22 @@ try {
     $socket = new MonsterMQ\Connections\Stream();
     $socket->connect();
     $transmitter = new MonsterMQ\Connections\BinaryTransmitter($socket);
-	$connection = new MonsterMQ\AMQPDispatchers\ConnectionDispatcher($transmitter);
+	$dispatcher = new MonsterMQ\AMQPDispatchers\ConnectionDispatcher($transmitter);
+	$session = new MonsterMQ\Core\Session($dispatcher);
+	$session->logIn();
 
-	$connection->receive_start();
 
-	//Принять аргументы из receive_start
-	$connection->send_start_ok('AMQPLAIN', 'guest','guest','en_US');
-
-    $tuningParameters = $connection->receive_tune();
-
-	$connection->send_tune_ok(
-	    $tuningParameters['channelMax'],
-        $tuningParameters['frameMax'],
-        $tuningParameters['heartbeat']
-    );
-
-	$connection->send_open();
     echo '</pre>';
     /*
+	$producer->session()->locale('en_US')->virtualHost('/')->logIn('guest','guest');
     $producer->newDirectExchange('name')->setPersistent()->declare();
     $producer->newFanoutExchange('another name')->setPersistent()->declare();
     $producer->newTopicExchange('yet another name')->setPersistent()->declare();
     $producer->newQueue('queue name')->declare()->bind('binding name');
 	$producer->defaultRoutingKey('routing key');
     $producer->overrideDefaultExchange('exchange name');
+	$producer->changeChannel(1);
+	$consumer->useMultipleChannels([1,2]);
     */
 }catch (\Exception $e) {
     echo $e->getMessage();

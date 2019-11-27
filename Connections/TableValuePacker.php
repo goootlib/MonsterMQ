@@ -3,8 +3,8 @@
 namespace MonsterMQ\Connections;
 
 use MonsterMQ\Exceptions\PackerException;
-use MonsterMQ\Interfaces\TableValuePacker as TableValuePackerInterface;
-use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Connections\TableValuePacker as TableValuePackerInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Support\FieldType;
 
 /**

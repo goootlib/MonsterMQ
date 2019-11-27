@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MonsterMQ\Interfaces;
+namespace MonsterMQ\Interfaces\Connections;
 
 
 interface BinaryTransmitter
@@ -90,7 +90,7 @@ interface BinaryTransmitter
      *
      * @return string
      */
-    public function receiveShortStr(): string;
+    public function receiveShortStr(): ?string;
 
     /**
      * Reads 2^32 maximum length string. Long strings contain first 32 bits
@@ -98,7 +98,7 @@ interface BinaryTransmitter
      *
      * @return string
      */
-    public function receiveLongStr(): string;
+    public function receiveLongStr(): ?string;
 
     /**
      * Receives Field Table parameter from server response.
@@ -152,7 +152,7 @@ interface BinaryTransmitter
      *
      * @return string Untranslated raw data.
      */
-    public function receiveRaw(int $bytes): string;
+    public function receiveRaw(int $bytes): ?string;
 
     /**
      * Sends raw untranslated data through network.

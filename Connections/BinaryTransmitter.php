@@ -2,12 +2,11 @@
 
 namespace MonsterMQ\Connections;
 
-use http\Exception\InvalidArgumentException;
 use MonsterMQ\Exceptions\PackerException;
-use MonsterMQ\Interfaces\Stream as StreamInterface;
-use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
-use MonsterMQ\Interfaces\TableValueUnpacker as TableValueUnpackerInterface;
-use MonsterMQ\Interfaces\TableValuePacker as TableValuePackerInterface;
+use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Connections\TableValueUnpacker as TableValueUnpackerInterface;
+use MonsterMQ\Interfaces\Connections\TableValuePacker as TableValuePackerInterface;
 use MonsterMQ\Connections\TableValueUnpacker;
 use MonsterMQ\Connections\TableValuePacker;
 use MonsterMQ\Support\FieldType;
@@ -66,7 +65,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      *
      * @var int
      */
-    protected $bufferPointer = 0;
+    protected $bufferOffset = 0;
 
     /**
      * BinaryTransmitter constructor.
@@ -212,7 +211,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     {
         $rawByte = $this->receiveRaw(1);
 
-        $value = @($rawByte & 1) ? 1 : 0;
+        $value =  @($rawByte & 1) ? 1 : 0;
         return $value;
     }
 
@@ -279,7 +278,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      *
      * @return string Translated short string.
      */
-    public function receiveShortStr(): string
+    public function receiveShortStr(): ?string
     {
         $rawLength = $this->receiveRaw(1);
         list(, $length) = unpack('C', $rawLength);
@@ -294,7 +293,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      *
      * @return string Translated long string.
      */
-    public function receiveLongStr(): string
+    public function receiveLongStr(): ?string
     {
         $length = $this->receiveLong();
         $string = $this->receiveRaw($length);
@@ -314,6 +313,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
         $tableSize = $this->receiveLong();
         //Size of size indicator also included
         $readLength = 4;
+        $result = [];
         while ($readLength < $tableSize) {
             $key = $this->receiveShortStr();
             //Add 1 byte as length indicator of key
@@ -356,8 +356,8 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      */
     protected function retrieveFromBuffer(int $bytes): ?string
     {
-        if (!empty($this->buffer) && (($this->bufferPointer + $bytes) <= $this->bufferLength())) {
-            $retrieved = substr($this->buffer, $this->bufferPointer, $bytes);
+        if (!empty($this->buffer) && (($this->bufferOffset + $bytes) <= $this->bufferLength())) {
+            $retrieved = substr($this->buffer, $this->bufferOffset, $bytes);
             $this->bufferPointer += $bytes;
             return $retrieved;
         } else {
@@ -418,7 +418,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
      *
      * @return string Untranslated raw data.
      */
-    public function receiveRaw(int $bytes) :string
+    public function receiveRaw(int $bytes): ?string
     {
         if ($this->accumulate) {
             return $this->retrieveFromBuffer($bytes);

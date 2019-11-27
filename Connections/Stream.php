@@ -2,9 +2,8 @@
 
 namespace MonsterMQ\Connections;
 
-use http\Exception\InvalidArgumentException;
 use MonsterMQ\Exceptions\NetworkException;
-use MonsterMQ\Interfaces\Stream as StreamInterface;
+use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 
 /**
  * Class Stream based on capabilities
@@ -95,31 +94,34 @@ class Stream implements StreamInterface
     }
 
     /**
-     * Sets reading/writing timeout after which reading
-     * from or writing to socket fails.
+     * Sets reading/writing timeout after which reading from or writing to
+     * socket fails.
      *
-     * @param int|float $seconds     In case of int type of the first argument, the second argument also
-     *                               must be set. In case of float type of first argument
-     *                               fractional part of float number will be treated as microseconds and will
-     *                               be used instead of second argument.
+     * @param int|float $seconds     In case of int type of the first argument,
+     *                               the second argument also must be set. In
+     *                               case of float type of first argument
+     *                               fractional part of float number will be
+     *                               treated as microseconds and will be used
+     *                               instead of second argument.
      * @param int|null $microseconds Defines microseconds part of reading
      *                               timeout.
+     *
      * @return $this                 For chaining purposes.
      */
     public function setTimeout($seconds, $microseconds = 0)
     {
-        if(!is_int($seconds) && !is_float($seconds)){
-            throw new InvalidArgumentException(
+        if (!is_int($seconds) && !is_float($seconds)) {
+            throw new \InvalidArgumentException(
                 'Error while setting reading timeout. Provided "seconds" argument is not an integer or a float.'
             );
-        }elseif (is_int($seconds) && !is_int($microseconds)){
-            throw new InvalidArgumentException(
+        } elseif (is_int($seconds) && !is_int($microseconds)) {
+            throw new \InvalidArgumentException(
                 'Error while setting reading timeout. 
                 If provided "seconds" argument is an integer you must provide second "microseconds" argument as integer too.'
             );
         }
 
-        if(is_float($seconds)){
+        if (is_float($seconds)) {
             //Fractional part of float multiplied by number of microseconds in one second.
             $microseconds = fmod($seconds,1) * 1000000;
             $seconds = floor($seconds);
@@ -134,7 +136,8 @@ class Stream implements StreamInterface
      *
      * @param int $port    Port to be used for binding.
      * @param int $address IP address to be used for binding.
-     * @return    $this    For chaining purposes.
+     *
+     * @return $this For chaining purposes.
      */
     public function bind($port = 0, $address = 0)
     {
@@ -152,24 +155,11 @@ class Stream implements StreamInterface
     public function enableNodelay()
     {
         //TCP nodelay available only in PHP 7.1 and higher.
-        if(PHP_VERSION_ID >= 70100) {
+        if (PHP_VERSION_ID >= 70100) {
             $this->tcpNodelay = true;
         }
 
         return $this;
-    }
-
-    /**
-     * Whether TCP nodelay enabled or not.
-     *
-     * @return bool
-     */
-    public function nodelayEnabled()
-    {
-        //TCP nodelay available only in PHP 7.1 and higher.
-        if(PHP_VERSION_ID >= 70100 && $this->tcpNodelay == true){
-            return true;
-        }
     }
 
     /**
@@ -191,7 +181,7 @@ class Stream implements StreamInterface
     {
         $socketContextOptions = ['bindto' => "{$this->bindAdress}:{$this->bindPort}"];
 
-        if($this->nodelayEnabled()){
+        if ($this->tcpNodelay) {
             $socketContextOptions = array_merge($socketContextOptions, ['tcp_nodelay' => true]);
         }
         $this->context = stream_context_create([
@@ -221,11 +211,11 @@ class Stream implements StreamInterface
      */
     public function keepaliveAvailable()
     {
-        if(
+        if (
             defined('SOL_SOCKET')
             && defined('SO_KEEPALIVE')
             && function_exists('socket_import_stream')
-        ){
+        ) {
             return true;
         }
     }
@@ -235,7 +225,7 @@ class Stream implements StreamInterface
      */
     protected function applyKeepalive()
     {
-        if($this->keepaliveEnabled && $this->keepaliveAvailable()){
+        if ($this->keepaliveEnabled && $this->keepaliveAvailable()) {
             $socket = socket_import_stream($this->streamResource);
             socket_set_option($socket, SOL_SOCKET, SO_KEEPALIVE, 1);
         }
@@ -247,11 +237,12 @@ class Stream implements StreamInterface
      * @param string            $address           IP address which AMQP server listens.
      * @param int               $AMQPport          Port to which AMQP server was bound.
      * @param float             $connectionTimeout Time after which connection attempt fails.
+     *
      * @throws NetworkException                    Throws in case of connection could not be established.
      */
     public function connect ($address = '127.0.0.1', $AMQPport = 5672, $connectionTimeout = null)
     {
-        if(!$this->contextAvailable){
+        if (!$this->contextAvailable) {
             $this->refreshContext();
         }
 
@@ -280,7 +271,7 @@ class Stream implements StreamInterface
     /**
      * Whether connection closed or not.
      *
-     * @return bool
+     * @return bool Whether connection closed or not.
      */
     public function connectionClosed()
     {
@@ -293,10 +284,12 @@ class Stream implements StreamInterface
      * Writes to the socket.
      *
      * @param string            $data Data to be sent.
+     *
      * @return int|void               Amount of data has been written.
+     *
      * @throws NetworkException       In case of closure connection or writing error.
      */
-    public function writeRaw($data)
+    public function writeRaw(string $data): int
     {
         if($this->connectionClosed()){
             throw new NetworkException('Connection was closed.');
@@ -320,14 +313,19 @@ class Stream implements StreamInterface
     /**
      * Reads from the socket.
      *
-     * @param Number            $bytes Number of bytes to be read.
-     * @return string                  Data received from remote peer.
-     * @throws NetworkException        In case of connection closure or reading error.
+     * @param int $bytes Number of bytes to be read.
+     *
+     * @return string Data received from remote peer.
+     *
+     * @throws NetworkException In case of connection closure or reading error.
      */
-    public function readRaw($bytes)
+    public function readRaw(int $bytes): ?string
     {
         if($this->connectionClosed()){
             throw new NetworkException('Connection was closed.');
+        }
+        if ($bytes == 0) {
+            return null;
         }
         return fread($this->streamResource, $bytes);
     }
@@ -337,7 +335,7 @@ class Stream implements StreamInterface
      *
      * Before closing network connections don't
      * forget to send Connection.Close method to the server. Or hand-shake
-     * incoming Connection.Close with Connection.CloseOk .
+     * incoming Connection.Close with Connection.CloseOk.
      */
     public function close()
     {

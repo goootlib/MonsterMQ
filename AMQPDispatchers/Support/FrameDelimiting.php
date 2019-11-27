@@ -1,11 +1,16 @@
 <?php
 
 
-namespace MonsterMQ\Support;
+namespace MonsterMQ\AMQPDispatchers\Support;
 
 
 use MonsterMQ\Exceptions\ProtocolException;
 
+/**
+ * This trait responsible for frame delimiting and validation of delimiting.
+ *
+ * @author Gleb zhukov <goootlib@gmail.com>
+ */
 trait FrameDelimiting
 {
     /**
@@ -14,7 +19,7 @@ trait FrameDelimiting
      *
      * @throws ProtocolException
      */
-    public function validateFrameDelimiter()
+    protected function validateFrameDelimiter()
     {
         if("\xCE" != $this->transmitter->receiveRaw(1)){
             throw new ProtocolException(
@@ -26,7 +31,7 @@ trait FrameDelimiting
     /**
      * This method must complete each frame transmission.
      */
-    public function sendFrameDelimiter()
+    protected function sendFrameDelimiter()
     {
         $this->transmitter->sendRaw("\xCE");
     }

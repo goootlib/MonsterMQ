@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MonsterMQ\Interfaces;
+namespace MonsterMQ\Interfaces\Connections;
 
 
 interface TableValuePacker

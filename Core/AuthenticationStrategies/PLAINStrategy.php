@@ -4,12 +4,34 @@
 namespace MonsterMQ\Core\AuthenticationStrategies;
 
 
-use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Core\AuthenticationStrategy as AuthenticationStrategyInterface;
 
-class PLAINStrategy
+/**
+ * This class responsible for authentication within AMQP connection
+ * establishment.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
+class PLAINStrategy implements AuthenticationStrategyInterface
 {
-    public function execute(BinaryTransmitterInterface $transmitter,string $username, string $password)
-    {
+    public const AUTH_TYPE_NAME = "PLAIN";
 
+    /**
+     * Returns SASL client response.
+     *
+     * @param BinaryTransmitterInterface $transmitter Transmitter instance.
+     * @param string                     $username    Given username.
+     * @param string                     $password    Given password.
+     *
+     * @return string SASL client response
+     */
+    public function getClientResponse(
+        BinaryTransmitterInterface $transmitter,
+        string $username,
+        string $password
+    ): string {
+        $saslPayload = "\x00{$username}\x00{$password}";
+        return $saslPayload;
     }
 }

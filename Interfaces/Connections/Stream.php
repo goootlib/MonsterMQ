@@ -1,6 +1,6 @@
 <?php
 
-namespace MonsterMQ\Interfaces;
+namespace MonsterMQ\Interfaces\Connections;
 
 Interface Stream
 {
@@ -11,7 +11,7 @@ Interface Stream
      * @param $data Data that will be transmitted
      * @return void
      */
-    public function writeRaw ($data);
+    public function writeRaw (string $data): int;
 
     /**
      * This method reads from the established
@@ -20,7 +20,7 @@ Interface Stream
      * @param $bytes Number of bytes to be read
      * @return string Data received through connection
      */
-    public function readRaw ($bytes);
+    public function readRaw (int $bytes): ?string;
 
     /**
      * Opens the network connection to specified address

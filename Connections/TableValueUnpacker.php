@@ -3,9 +3,8 @@
 
 namespace MonsterMQ\Connections;
 
-use http\Exception\InvalidArgumentException;
-use MonsterMQ\Interfaces\TableValueUnpacker as TableValueUnpackerInterface;
-use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Connections\TableValueUnpacker as TableValueUnpackerInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Support\FieldType;
 
 /**
