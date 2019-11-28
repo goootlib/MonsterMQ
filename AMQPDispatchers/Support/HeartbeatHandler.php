@@ -19,7 +19,7 @@ trait HeartbeatHandler
      */
     protected function receiveFrameType(): int
     {
-        while (!is_null($frametype = $this->transmitter->receiveOctet())){
+        while (!is_null($frametype = $this->transmitter->receiveOctet())) {
             if ($frametype == static::HEARTBEAT_FRAME_TYPE) {
                 $this->transmitter->receiveShort();
                 $this->transmitter->receiveLong();

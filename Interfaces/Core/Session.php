@@ -20,6 +20,8 @@ interface Session
      */
     public function logIn(string $username = 'guest', string $password = 'guest');
 
+    public function logOut();
+
     /**
      * This method allows to choose a locale for a session.
      *

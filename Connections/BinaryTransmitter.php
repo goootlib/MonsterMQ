@@ -93,7 +93,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     public function sendOctet(int $number)
     {
         if ($number > 255 || $number < 0) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Number '.$number.' out of valid range of octet value. Valid 
                 range is 0 - 255.'
             );
@@ -111,7 +111,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     public function sendShort(int $number)
     {
         if ($number > 65535 || $number < 0) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Number '.$number.' out of valid range of short value. Valid 
                 range is 0 - 65535.'
             );
@@ -129,7 +129,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     public function sendLong(int $number)
     {
         if ($number > 4294967295 || $number < 0) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Number '.$number.' out of valid range of long value. Valid 
                 range is 0 - 4 294 967 295.'
             );
@@ -148,7 +148,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     {
         $length = strlen($value);
         if ($length > 255) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 "Short string is too big. It must be equal or less then 255 
                 bytes long. {$length} bytes given.");
         }
@@ -167,7 +167,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
         $length = strlen($value);
         $limit = pow(2,32) - 1;
         if ($length > $limit) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Long string is too big. It must be less than 2^32 bytes.'
             );
         }

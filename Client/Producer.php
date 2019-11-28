@@ -3,40 +3,12 @@
 
 namespace MonsterMQ\Client;
 
-use MonsterMQ\Interfaces\IO\IO as IOInterface;
+use MonsterMQ\Client\BaseClient;
 
 /**
- * This class provides API for publishing messages
- * and other interacting with AMQP server.
+ * This class provides API for interacting with AMQP server.
  */
-class Producer
+class Producer extends BaseClient
 {
-    public $io;
-
-    /**
-     * Transmitter instance.
-     * @see Transmitters folder
-     * @var MonsterMQ\Interfaces\Transmitter
-     */
-    protected $transmitter;
-
-    public function __construct(IOInterface $transmitter)
-    {
-        $this->io = $transmitter;
-    }
-
-    public function __destruct()
-    {
-        // TODO: Implement __destruct() method.
-    }
-
-    /**
-     * Returns transmitter instance.
-     * @return MonsterMQ\Interfaces\Transmitter|TransmitterInterface
-     */
-    public function connection()
-    {
-        return $this->io;
-    }
 
 }

@@ -97,18 +97,18 @@ class Stream implements StreamInterface
      * Sets reading/writing timeout after which reading from or writing to
      * socket fails.
      *
-     * @param int|float $seconds     In case of int type of the first argument,
-     *                               the second argument also must be set. In
-     *                               case of float type of first argument
-     *                               fractional part of float number will be
-     *                               treated as microseconds and will be used
-     *                               instead of second argument.
-     * @param int|null $microseconds Defines microseconds part of reading
-     *                               timeout.
+     * @param int|float $seconds      In case of int type of the first argument,
+     *                                the second argument also must be set. In
+     *                                case of float type of first argument
+     *                                fractional part of float number will be
+     *                                treated as microseconds and will be used
+     *                                instead of second argument.
+     * @param int       $microseconds Defines microseconds part of reading
+     *                                timeout.
      *
-     * @return $this                 For chaining purposes.
+     * @return $this For chaining purposes.
      */
-    public function setTimeout($seconds, $microseconds = 0)
+    public function setTimeout($seconds, int $microseconds = 0)
     {
         if (!is_int($seconds) && !is_float($seconds)) {
             throw new \InvalidArgumentException(
@@ -139,7 +139,7 @@ class Stream implements StreamInterface
      *
      * @return $this For chaining purposes.
      */
-    public function bind($port = 0, $address = 0)
+    public function bindTo(int $port = 0, string $address = null)
     {
         $this->bindPort = $port;
         $this->bindAddress = $address;
@@ -209,7 +209,7 @@ class Stream implements StreamInterface
      *
      * @return bool Whether keepalive available or not.
      */
-    public function keepaliveAvailable()
+    public function keepaliveAvailable(): bool
     {
         if (
             defined('SOL_SOCKET')
@@ -234,13 +234,17 @@ class Stream implements StreamInterface
     /**
      * Connects to specified address and port.
      *
-     * @param string            $address           IP address which AMQP server listens.
-     * @param int               $AMQPport          Port to which AMQP server was bound.
-     * @param float             $connectionTimeout Time after which connection attempt fails.
+     * @param string            $address           IP address which AMQP server
+     *                                             listens.
+     * @param int               $AMQPport          Port to which AMQP server
+     *                                             was bound.
+     * @param float             $connectionTimeout Time after which connection
+     *                                             attempt fails.
      *
-     * @throws NetworkException                    Throws in case of connection could not be established.
+     * @throws NetworkException                    Throws in case of connection
+     *                                             could not be established.
      */
-    public function connect ($address = '127.0.0.1', $AMQPport = 5672, $connectionTimeout = null)
+    public function connect (string $address = '127.0.0.1', int $AMQPport = 5672, float $connectionTimeout = null)
     {
         if (!$this->contextAvailable) {
             $this->refreshContext();
@@ -273,11 +277,25 @@ class Stream implements StreamInterface
      *
      * @return bool Whether connection closed or not.
      */
-    public function connectionClosed()
+    public function connectionClosed(): bool
     {
-        if(!$this->streamResource){
+        if (!$this->streamResource) {
             return true;
         }
+        return false;
+    }
+
+    /**
+     * Whether connected.
+     *
+     * @return bool Whether connected.
+     */
+    public function isConnected(): bool
+    {
+        if (is_resource($this->streamResource)) {
+            return true;
+        }
+        return false;
     }
 
     /**

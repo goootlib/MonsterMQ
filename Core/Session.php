@@ -80,6 +80,11 @@ class Session implements SessionInterface
         $this->loggedIn = true;
     }
 
+    public function logOut()
+    {
+
+    }
+
     /**
      * Selects authentication strategy which is used during connection
      * establishment.

@@ -8,13 +8,8 @@ header('Content-Type:text/html,charset=utf-8');
 
 try {
     echo '<pre>';
-    $socket = new MonsterMQ\Connections\Stream();
-    $socket->connect();
-    $transmitter = new MonsterMQ\Connections\BinaryTransmitter($socket);
-	$dispatcher = new MonsterMQ\AMQPDispatchers\ConnectionDispatcher($transmitter);
-	$session = new MonsterMQ\Core\Session($dispatcher);
-	$session->logIn();
-
+    $producer = new MonsterMQ\Client\Producer();
+    $producer->logIn();
 
     echo '</pre>';
     /*
