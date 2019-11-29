@@ -11,21 +11,21 @@ interface ConnectionDispatcher extends AMQP
 
     public const CLASS_ID = 10;
 
-    public const START_METHOD_ID = 10;
-    public const START_OK_METHOD_ID = 11;
-    public const SECURE_OK_METHOD_ID = 21;
-    public const TUNE_METHOD_ID = 30;
-    public const TUNE_OK_METHOD_ID = 31;
-    public const OPEN_METHOD_ID = 40;
-    public const OPEN_OK_METHOD_ID = 41;
-    public const CLOSE_METHOD_ID = 50;
-    public const CLOSE_OK_METHOD_ID = 51;
+    public const CONNECTION_START = 10;
+    public const CONNECTION_START_OK = 11;
+    public const CONNECTION_TUNE = 30;
+    public const CONNECTION_TUNE_OK = 31;
+    public const CONNECTION_OPEN = 40;
+    public const CONNECTION_OPEN_OK = 41;
+    public const CONNECTION_CLOSE = 50;
+    public const CONNECTION_CLOSE_OK = 51;
 
     public const PEER_PROPERTIES = [
         'product' => ['S', 'MonsterMQ'],
         'platform' => ['S', 'PHP'],
-        'version' => ['S', '0.1.0'],
-        'copyright' => ['S', '']
+        'version' => ['S', '1.0.0'],
+        'copyright' => ['S', 'Copyright (C) 2020 Gleb Zhukov'],
+        'information' => ['S','Licensed under the MIT license']
 
     ];
 
@@ -34,7 +34,7 @@ interface ConnectionDispatcher extends AMQP
      * arguments propose authentication method, locale and also server peer
      * properties.
      */
-    public function receive_start(): array;
+    public function receiveStart(): array;
 
     /**
      * Select security mechanism and locale. This method also selects a SASL
@@ -46,14 +46,14 @@ interface ConnectionDispatcher extends AMQP
      *
      * @throws PackerException In case of unsupported field table type encounter.
      */
-    public function send_start_ok(string $username, string $password, string $locale);
+    public function sendStartOk(string $username, string $password, string $locale);
 
     /**
      * Receive Tune AMQP method along with its arguments. This arguments
      * propose such session parameters as maximum channels number, maximum
      * frame size, and heartbeat timeout.
      */
-    public function receive_tune(): array;
+    public function receiveTune(): array;
 
     /**
      * This method sends the client's
@@ -69,7 +69,7 @@ interface ConnectionDispatcher extends AMQP
      *                        sendings to or from server peer should close the
      *                        connection.
      */
-    public function send_tune_ok(int $channelMax, int $frameMax, int $heartbeat);
+    public function sendTuneOk(int $channelMax, int $frameMax, int $heartbeat);
 
     /**
      * This method opens a connection to a
@@ -80,12 +80,12 @@ interface ConnectionDispatcher extends AMQP
      *
      * @param string $path Virtual host to choose.
      */
-    public function send_open(string $path);
+    public function sendOpen(string $path);
 
     /**
      * This method signals to the client that the connection is ready for use.
      */
-    public function receive_open_ok();
+    public function receiveOpenOk();
 
     /**
      * Request a connection close.This method indicates that the sender wants
@@ -97,16 +97,13 @@ interface ConnectionDispatcher extends AMQP
      * be discarded. The response to receiving a Close after sending Close must
      * be to send Close-Ok.
      */
-    public function send_close(int $replyCode, string $replyText, int $classId, int $methodId);
+    public function sendClose(int $replyCode, string $replyText, int $classId, int $methodId);
 
     /**
      * Confirm a connection close.This method confirms a Connection.Close
      * method and tells the recipient that it is safe to release resources for
      * the connection and close the socket.
      */
-    public function send_close_ok();
+    public function sendCloseOk();
 
-    public function receive_close();
-
-    public function receive_close_ok();
 }

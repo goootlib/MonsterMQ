@@ -6,6 +6,7 @@ namespace MonsterMQ\Core;
 use MonsterMQ\Core\AuthenticationStrategies\AMQPLAINStrategy;
 use MonsterMQ\Core\AuthenticationStrategies\PLAINStrategy;
 use MonsterMQ\Exceptions\ConnectionException;
+use MonsterMQ\Exceptions\PackerException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
@@ -117,11 +118,12 @@ class Session implements SessionInterface
      * @param string $password Password to be used for authentication.
      *
      * @throws ConnectionException
-     * @throws \MonsterMQ\Exceptions\PackerException
+     * @throws PackerException
+     * @throws ProtocolException
      */
     protected function startSession(string $username, string $password)
     {
-        $properties = $this->connectionDispatcher->receive_start();
+        $properties = $this->connectionDispatcher->receiveStart();
 
         $this->selectAuthStrategy($properties['mechanisms']);
 		
@@ -131,7 +133,7 @@ class Session implements SessionInterface
 		}else{
 			$locale = 'en_US';
 		}
-        $this->connectionDispatcher->send_start_ok($username, $password, $locale);
+        $this->connectionDispatcher->sendStartOk($username, $password, $locale);
     }
 
     /**
@@ -139,8 +141,8 @@ class Session implements SessionInterface
      */
     protected function tuneSession()
     {
-        $properties = $this->connectionDispatcher->receive_tune();
-        $this->connectionDispatcher->send_tune_ok(
+        $properties = $this->connectionDispatcher->receiveTune();
+        $this->connectionDispatcher->sendTuneOk(
             $properties['channelMaxNumber'],
             $properties['frameMaxSize'],
             $properties['heartbeat']
@@ -152,8 +154,8 @@ class Session implements SessionInterface
      */
     protected function openVirtualHost()
     {
-        $this->connectionDispatcher->send_open($this->virtualHost);
-        $this->connectionDispatcher->receive_open_ok();
+        $this->connectionDispatcher->sendOpen($this->virtualHost);
+        $this->connectionDispatcher->receiveOpenOk();
     }
 
     /**

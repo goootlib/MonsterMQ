@@ -61,7 +61,7 @@ abstract class BaseClient
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
-            $this->session = new Session(new ConnectionDispatcher($this->transmitter));
+            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this->socket));
         } else {
             $this->session = $session;
         }
