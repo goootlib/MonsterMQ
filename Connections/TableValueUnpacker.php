@@ -6,6 +6,7 @@ namespace MonsterMQ\Connections;
 use MonsterMQ\Interfaces\Connections\TableValueUnpacker as TableValueUnpackerInterface;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Support\FieldType;
+use MonsterMQ\Support\NumberConverter;
 
 /**
  * This class translates binary field table values into corresponding PHP
@@ -41,7 +42,7 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     /**
      * Instance of binary transmitter.
      *
-     * @var \MonsterMQ\Interfaces\BinaryTransmitter
+     * @var \MonsterMQ\Interfaces\Connections\BinaryTransmitter
      */
     protected $transmitter;
 
@@ -242,6 +243,7 @@ class TableValueUnpacker implements TableValueUnpackerInterface
     {
         $length = $this->transmitter->receiveLong();
         $read = 0;
+        $resultArray = [];
         while ($read < $length) {
             if ($this->transmitter->bufferingEnabled()) {
                 $valueType = $this->transmitter->retrieveFromBuffer(1);

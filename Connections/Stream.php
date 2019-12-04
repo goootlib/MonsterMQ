@@ -47,7 +47,7 @@ class Stream implements StreamInterface
      *
      * @var int
      */
-    protected $bindAdress = 0;
+    protected $bindAddress = 0;
 
     /**
      * Port that will be used for binding. If stays 0, php selects it by itself.
@@ -134,8 +134,8 @@ class Stream implements StreamInterface
     /**
      * Which ip address and port will be used for binding.
      *
-     * @param int $port    Port to be used for binding.
-     * @param int $address IP address to be used for binding.
+     * @param int    $port    Port to be used for binding.
+     * @param string $address IP address to be used for binding.
      *
      * @return $this For chaining purposes.
      */
@@ -217,6 +217,8 @@ class Stream implements StreamInterface
             && function_exists('socket_import_stream')
         ) {
             return true;
+        } else {
+            return false;
         }
     }
 

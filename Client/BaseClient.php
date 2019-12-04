@@ -7,8 +7,6 @@ namespace MonsterMQ\Client;
 use MonsterMQ\AMQPDispatchers\ConnectionDispatcher;
 use MonsterMQ\Connections\BinaryTransmitter;
 use MonsterMQ\Connections\Stream;
-use MonsterMQ\Connections\TableValuePacker;
-use MonsterMQ\Connections\TableValueUnpacker;
 use MonsterMQ\Core\Session;
 use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Stream as StreamInterface;
@@ -61,7 +59,7 @@ abstract class BaseClient
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
-            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this->socket));
+            $this->session = new Session(new ConnectionDispatcher($this->socket, $this->transmitter));
         } else {
             $this->session = $session;
         }
@@ -82,7 +80,7 @@ abstract class BaseClient
     }
 
     /**
-     * @return StreamInterface
+     * @return \MonsterMQ\Interfaces\Connections\Stream
      */
     public function socket()
     {
@@ -90,7 +88,7 @@ abstract class BaseClient
     }
 
     /**
-     * @return StreamInterface
+     * @return \MonsterMQ\Interfaces\Connections\Stream
      */
     public function network()
     {
@@ -98,7 +96,7 @@ abstract class BaseClient
     }
 
     /**
-     * @return SessionInterface
+     * @return \MonsterMQ\Interfaces\Core\Session
      */
     public function session()
     {

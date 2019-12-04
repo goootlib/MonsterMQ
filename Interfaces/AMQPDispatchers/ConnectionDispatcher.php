@@ -9,17 +9,6 @@ interface ConnectionDispatcher extends AMQP
     public const SUPPORTED_MAJOR_VERSION = 0;
     public const SUPPORTED_MINOR_VERSION = 9;
 
-    public const CLASS_ID = 10;
-
-    public const CONNECTION_START = 10;
-    public const CONNECTION_START_OK = 11;
-    public const CONNECTION_TUNE = 30;
-    public const CONNECTION_TUNE_OK = 31;
-    public const CONNECTION_OPEN = 40;
-    public const CONNECTION_OPEN_OK = 41;
-    public const CONNECTION_CLOSE = 50;
-    public const CONNECTION_CLOSE_OK = 51;
-
     public const PEER_PROPERTIES = [
         'product' => ['S', 'MonsterMQ'],
         'platform' => ['S', 'PHP'],
@@ -98,12 +87,4 @@ interface ConnectionDispatcher extends AMQP
      * be to send Close-Ok.
      */
     public function sendClose(int $replyCode, string $replyText, int $classId, int $methodId);
-
-    /**
-     * Confirm a connection close.This method confirms a Connection.Close
-     * method and tells the recipient that it is safe to release resources for
-     * the connection and close the socket.
-     */
-    public function sendCloseOk();
-
 }

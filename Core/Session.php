@@ -5,7 +5,6 @@ namespace MonsterMQ\Core;
 
 use MonsterMQ\Core\AuthenticationStrategies\AMQPLAINStrategy;
 use MonsterMQ\Core\AuthenticationStrategies\PLAINStrategy;
-use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\PackerException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
@@ -63,8 +62,8 @@ class Session implements SessionInterface
      * @param string $username Given username for authentication.
      * @param string $password Given password for authentication.
      *
-     * @throws ConnectionException
-     * @throws \MonsterMQ\Exceptions\PackerException
+     * @throws PackerException
+     * @throws ProtocolException
      */
     public function logIn(string $username = 'guest', string $password = 'guest')
     {
@@ -117,7 +116,6 @@ class Session implements SessionInterface
      * @param string $username Username to be used for authentication.
      * @param string $password Password to be used for authentication.
      *
-     * @throws ConnectionException
      * @throws PackerException
      * @throws ProtocolException
      */

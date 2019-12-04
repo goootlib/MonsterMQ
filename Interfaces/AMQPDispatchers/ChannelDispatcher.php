@@ -4,34 +4,45 @@
 namespace MonsterMQ\Interfaces\AMQPDispatchers;
 
 
+use MonsterMQ\Exceptions\ProtocolException;
+use MonsterMQ\Exceptions\SessionException;
+
 interface ChannelDispatcher extends AMQP
 {
-    public const CLASS_ID = 20;
+    /**
+     * This method opens a channel to the server.
+     *
+     * @param int $channel
+     */
+    public function sendOpen(int $channel);
 
-    public const CHANNEL_OPEN = 10;
-    public const CHANNEL_OPEN_OK = 11;
-    public const CHANNEL_FLOW = 20;
-    public const CHANNEL_FLOW_OK = 21;
-    public const CHANNEL_CLOSE = 40;
-    public const CHANNEL_CLOSE_OK = 41;
+    /**
+     * This method signals to the client that the channel is ready for use.
+     *
+     * @throws ProtocolException
+     * @throws SessionException
+     */
+    public function receiveOpenOk();
 
-    public function send_open(int $channel);
+    /**
+     * Enable/disable flow from peer.
+     *
+     * @param int $channel
+     * @param bool $active
+     */
+    public function sendFlow(int $channel, bool $active);
 
-    public function receive_open_ok();
+    public function sendFlowOk(int $channel, bool $active);
 
-    public function send_flow(int $channel, bool $active);
+    public function receiveFlow();
 
-    public function send_flow_ok(int $channel, bool $active);
+    public function receiveFlowOk();
 
-    public function receive_flow();
+    public function sendClose();
 
-    public function receive_flow_ok();
+    public function sendCloseOk();
 
-    public function send_close();
+    public function receiveClose();
 
-    public function send_close_ok();
-
-    public function receive_close();
-
-    public function receive_close_ok();
+    public function receiveCloseOk();
 }

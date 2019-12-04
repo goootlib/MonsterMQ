@@ -358,7 +358,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     {
         if (!empty($this->buffer) && (($this->bufferOffset + $bytes) <= $this->bufferLength())) {
             $retrieved = substr($this->buffer, $this->bufferOffset, $bytes);
-            $this->bufferPointer += $bytes;
+            $this->bufferOffset += $bytes;
             return $retrieved;
         } else {
             return null;

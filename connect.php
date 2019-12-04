@@ -1,13 +1,12 @@
 <?php
 
-require __DIR__."/vendor/autoload.php";
-
 spl_autoload_register('loadMonsterClass');
 
 header('Content-Type:text/html,charset=utf-8');
 
 try {
     echo '<pre>';
+
     $producer = new MonsterMQ\Client\Producer();
     $producer->logIn();
 
@@ -22,6 +21,7 @@ try {
     $producer->overrideDefaultExchange('exchange name');
 	$producer->changeChannel(1);
 	$consumer->useMultipleChannels([1,2]);
+	$consumer->suspendChannel(1);
     */
 }catch (\Exception $e) {
     echo $e->getMessage();
