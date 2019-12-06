@@ -38,42 +38,31 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
     {
         $this->transmitter->sendRaw("AMQP\x0\x0\x9\x1");
 
-        $frameType = $this->receiveFrameType();
-        $this->setCurrentChannel($this->transmitter->receiveShort());
-        $this->setCurrentFrameSize($this->transmitter->receiveLong());
+        [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($frameType == static::METHOD_FRAME_TYPE && $this->currentChannel == static::SYSTEM_CHANNEL) {
-            [$classId, $methodId] = $this->receiveClassAndMethod();
-        } else {
-            throw new ProtocolException(
-                'Unexpected frame type or chanell number on receiving 
-                Connection.Start method.'
-            );
-        }
-
-        if ($classId == static::CONNECTION_CLASS_ID && $methodId == static::CONNECTION_START
-        ) {
-            $versionMajor = $this->transmitter->receiveOctet();
-            $versionMinor = $this->transmitter->receiveOctet();
-        } else {
+        if ($classId != static::CONNECTION_CLASS_ID && $methodId != static::CONNECTION_START) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '10' and method 
                 id '10'. '{$classId}' and '{$methodId}' given."
             );
+
         }
 
-        if ($versionMajor == static::SUPPORTED_MAJOR_VERSION
-            && $versionMinor == static::SUPPORTED_MINOR_VERSION
+        $versionMajor = $this->transmitter->receiveOctet();
+        $versionMinor = $this->transmitter->receiveOctet();
+
+        if ($versionMajor != static::SUPPORTED_MAJOR_VERSION
+            && $versionMinor != static::SUPPORTED_MINOR_VERSION
         ) {
-            $peerProperties = $this->transmitter->receiveFieldTable();
-            $mechanisms = $this->transmitter->receiveLongStr();
-            $locales = $this->transmitter->receiveLongStr();
-        } else {
             throw new ProtocolException(
                 "Unsupported server AMQP version - {$versionMajor}.{$versionMinor} , 
                 while MonsterMQ supports only 0.9.1"
             );
         }
+
+        $peerProperties = $this->transmitter->receiveFieldTable();
+        $mechanisms = $this->transmitter->receiveLongStr();
+        $locales = $this->transmitter->receiveLongStr();
 
         $this->validateFrameDelimiter();
 
@@ -125,25 +114,18 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
      */
     public function receiveTune(): array
     {
-        $frameType = $this->receiveFrameType();
-        $this->setCurrentChannel($this->transmitter->receiveShort());
-        if ($frameType !== static::METHOD_FRAME_TYPE || $this->currentChannel !== static::SYSTEM_CHANNEL) {
-            throw new ProtocolException(
-                "Unexpected frame type or channel number on receiving 
-                Connection.tune method."
-            );
-        }
-        $this->setCurrentFrameSize($this->transmitter->receiveLong());
-
         [$classId, $methodId] = $this->receiveClassAndMethod();
+
         if($classId !== static::CONNECTION_CLASS_ID || $methodId !== static::CONNECTION_TUNE) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '10' and method 
                 id '30'. '{$classId}' and '{$methodId}' given.");
         }
+
         $channelMax = $this->transmitter->receiveShort();
         $frameMax = $this->transmitter->receiveLong();
         $heartbeat = $this->transmitter->receiveShort();
+
         $this->validateFrameDelimiter();
 
         return [
@@ -171,6 +153,7 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(static::SYSTEM_CHANNEL);
+
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::CONNECTION_CLASS_ID);
         $this->transmitter->sendShort(static::CONNECTION_TUNE_OK);
@@ -178,8 +161,10 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
         $this->transmitter->sendLong($frameMaxSize);
         $this->transmitter->sendShort($heartbeat);
         $this->transmitter->disableBuffering();
+
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
@@ -196,6 +181,7 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(static::SYSTEM_CHANNEL);
+
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::CONNECTION_CLASS_ID);
         $this->transmitter->sendShort(static::CONNECTION_OPEN);
@@ -205,8 +191,10 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
         //following octet reserved by AMQP, now its value makes no sense
         $this->transmitter->sendOctet(0);
         $this->transmitter->disableBuffering();
+
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
@@ -218,24 +206,17 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
      */
     public function receiveOpenOk()
     {
-        $frameType = $this->receiveFrameType();
-        $this->setCurrentChannel($this->transmitter->receiveShort());
-        if ($frameType !== static::METHOD_FRAME_TYPE || $this->currentChannel !== static::SYSTEM_CHANNEL) {
-            throw new ProtocolException(
-                "Unexpected frame type or channel number on receiving 
-                Connection.open_ok method."
-            );
-        }
-        $this->setCurrentFrameSize($this->transmitter->receiveLong());
-
         [$classId, $methodId] = $this->receiveClassAndMethod();
+
         if($classId !== static::CONNECTION_CLASS_ID || $methodId !== static::CONNECTION_OPEN_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '10' and method 
                 id '41'. '{$classId}' and '{$methodId}' given.");
         }
+
         //Following short string argument reserved by AMQP
         $this->transmitter->receiveShortStr();
+
         $this->validateFrameDelimiter();
     }
 
@@ -252,15 +233,12 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
      *                          exception, this is the class of the method.
      * @param int $methodId     When the close is provoked by a method
      *                          exception, this is the ID of the method.
-     *
-     * @throws SessionException
-     * @throws ConnectionException
-     * @throws ProtocolException
      */
-    public function sendClose(int $replyCode, string $replyText, int $classId, int $methodId)
+    public function sendClose(int $replyCode, string $replyText, int $classId = null, int $methodId = null)
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(static::SYSTEM_CHANNEL);
+
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::CONNECTION_CLASS_ID);
         $this->transmitter->sendShort(static::CONNECTION_CLOSE);
@@ -269,8 +247,10 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
         $this->transmitter->sendShort($classId);
         $this->transmitter->sendShort($methodId);
         $this->transmitter->disableBuffering();
+
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
@@ -289,12 +269,10 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
         do {
             if (time() >= $start + $this->closeOkTimeout) {
                 throw new ConnectionException(
-                    "close-ok method expectation have been timed out. Connection was closed."
+                    "close-ok method expectation have been timed out. Connection has been closed."
                 );
             }
-            $this->receiveFrameType();
-            $this->transmitter->receiveShort();
-            $this->transmitter->receiveLong();
+
             [$classId, $methodId] = $this->receiveClassAndMethod();
 
             if ($classId == static::CONNECTION_CLASS_ID && $methodId == static::CONNECTION_CLOSE_OK) {

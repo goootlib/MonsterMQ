@@ -55,11 +55,25 @@ abstract class BaseDispatcher implements AMQP
     protected $currentChannel;
 
     /**
-     * Channels that are not available for transmitting messages.
+     * Channels that were opened.
      *
      * @var array
      */
-    public $suspendedChannels = [];
+    public static $openedChannels = [];
+
+    /**
+     * Channels that are open but not available for transmitting messages.
+     *
+     * @var array
+     */
+    public static $suspendedChannels = [];
+
+    /**
+     * Closed channels.
+     *
+     * @var array
+     */
+    public static $closedChannels = [];
 
     /**
      * BaseDispatcher constructor.
@@ -85,23 +99,43 @@ abstract class BaseDispatcher implements AMQP
     }
 
     /**
+     * Sets current channel number.
+     *
+     * @param int $channel Current channel number.
+     */
+    protected function setCurrentChannel(int $channel)
+    {
+        $this->currentChannel = $channel;
+    }
+
+    /**
+     * Returns current channel number.
+     *
+     * @return int
+     */
+    public function currentChannel(): int
+    {
+        return $this->currentChannel;
+    }
+
+    /**
      * Stores current frame size.
      *
      * @param int $size
      */
-    public function setCurrentFrameSize(int $size)
+    protected function setCurrentFrameSize(int $size)
     {
         $this->currentFrameSize = $size;
     }
 
     /**
-     * Sets current channel number
+     * Returns current frame size.
      *
-     * @param int $channel Current channel number.
+     * @return int
      */
-    public function setCurrentChannel(int $channel)
+    public function currentFrameSize(): int
     {
-        $this->currentChannel = $channel;
+        return $this->currentFrameSize;
     }
 
     /**
@@ -139,11 +173,16 @@ abstract class BaseDispatcher implements AMQP
     protected function receiveClassAndMethod(): array
     {
         do {
+            $this->receiveFrameType();
+            $this->setCurrentChannel($this->transmitter->receiveShort());
+            $this->setCurrentFrameSize($this->transmitter->receiveLong());
+
             $classId = $this->transmitter->receiveShort();
             $methodId = $this->transmitter->receiveShort();
 
             $connectionClosure = ($classId == static::CONNECTION_CLASS_ID) && ($methodId == static::CONNECTION_CLOSE);
             $flowControl = ($classId == static::CHANNEL_CLASS_ID) && ($methodId == static::CHANNEL_FLOW);
+            $channelClosure = ($classId == static::CHANNEL_CLASS_ID) && ($methodId == static::CHANNEL_CLOSE);
 
             if ($connectionClosure) {
                 $this->handleConnectionClose();
@@ -153,7 +192,11 @@ abstract class BaseDispatcher implements AMQP
                 $this->handleChannelFlow();
             }
 
-        } while ($connectionClosure || $flowControl);
+            if ($channelClosure) {
+                $this->handleChannelClosure();
+            }
+
+        } while ($connectionClosure || $flowControl || $channelClosure);
 
         return [$classId, $methodId];
     }
@@ -180,13 +223,32 @@ abstract class BaseDispatcher implements AMQP
         $isActive = $this->transmitter->receiveOctet();
         $this->validateFrameDelimiter();
 
-        $this->sendChannelFlowOk($this->currentChannel, $isActive);
+        $this->sendChannelFlowOk($isActive);
 
         if ($isActive) {
-            $this->suspendedChannels = array_diff($this->suspendedChannels, [$this->currentChannel]);
+            self::$suspendedChannels = array_diff(self::$suspendedChannels, [$this->currentChannel]);
         } else {
-            $this->suspendedChannels[] = $this->currentChannel;
+            self::$suspendedChannels[] = $this->currentChannel;
         }
+    }
+
+    /**
+     * Handles incoming channel closure method.
+     *
+     * @throws ProtocolException
+     */
+    protected function handleChannelClosure()
+    {
+        $this->transmitter->receiveShort();
+        $this->transmitter->receiveShortStr();
+        $this->transmitter->receiveShort();
+        $this->transmitter->receiveShort();
+
+        $this->validateFrameDelimiter();
+
+        self::$closedChannels[] = $this->currentChannel;
+
+        $this->sendChannelCloseOk();
     }
 
     /**
@@ -194,32 +256,34 @@ abstract class BaseDispatcher implements AMQP
      * that it is safe to release resources for the connection and close the
      * socket.
      */
-    public function sendConnectionCloseOk()
+    protected function sendConnectionCloseOk()
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(static::SYSTEM_CHANNEL);
+
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::CONNECTION_CLASS_ID);
         $this->transmitter->sendShort(static::CONNECTION_CLOSE_OK);
         $this->transmitter->disableBuffering();
+
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
     /**
      * Confirms to the peer that a flow command was received and processed.
      *
-     * @param int $channel Specified channel.
-     * @param bool $active If 1, the peer starts sending content frames.
-     *                     If 0, the peer stops sending content frames.
+     * @param bool $active If true, the peer starts sending content frames.
+     *                     If false, the peer stops sending content frames.
      */
-    public function sendChannelFlowOk(int $channel, bool $active)
+    protected function sendChannelFlowOk(bool $active)
     {
         $active = $active ? 1 : 0;
 
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
-        $this->transmitter->sendShort($channel);
+        $this->transmitter->sendShort($this->currentChannel);
 
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::CHANNEL_CLASS_ID);
@@ -229,6 +293,27 @@ abstract class BaseDispatcher implements AMQP
 
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
+        $this->sendFrameDelimiter();
+    }
+
+    /**
+     * This method confirms a Channel.Close method and tells the recipient that
+     * it is safe to release resources for the channel.
+     */
+    protected function sendChannelCloseOk()
+    {
+        $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
+        $this->transmitter->sendShort($this->currentChannel);
+
+        $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(static::CHANNEL_CLASS_ID);
+        $this->transmitter->sendShort(static::CHANNEL_CLOSE_OK);
+        $this->transmitter->disableBuffering();
+
+        $this->transmitter->sendLong($this->transmitter->bufferLength());
+        $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
@@ -243,21 +328,23 @@ abstract class BaseDispatcher implements AMQP
         $this->transmitter->enableBuffering();
         //Subtract 2 bytes as AMQP class id and yet 2 bytes as AMQP method id
         $this->transmitter->receiveIntoBuffer($this->currentFrameSize - 4);
+        $this->transmitter->disableBuffering();
         $this->validateFrameDelimiter();
 
+        $this->transmitter->enableBuffering();
         $replyCode = $this->transmitter->receiveShort();
         $replyMessage = $this->transmitter->receiveShortStr();
         $exceptionClassId = $this->transmitter->receiveShort();
         $exceptionMethodId = $this->transmitter->receiveShort();
         $this->transmitter->disableBuffering();
 
-        $msg = $exceptionClassId && $exceptionMethodId
+        $trailingMessage = $exceptionClassId && $exceptionMethodId
             ? "And exception class id '{$exceptionClassId}', exception method id '{$exceptionMethodId}'."
             : "";
 
         throw new SessionException(
             "Server closes the connection with reply code '{$replyCode}' and
-                 message '{$replyMessage}'. ".$msg
+                 message '{$replyMessage}'. ".$trailingMessage
         );
     }
 

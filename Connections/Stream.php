@@ -114,11 +114,6 @@ class Stream implements StreamInterface
             throw new \InvalidArgumentException(
                 'Error while setting reading timeout. Provided "seconds" argument is not an integer or a float.'
             );
-        } elseif (is_int($seconds) && !is_int($microseconds)) {
-            throw new \InvalidArgumentException(
-                'Error while setting reading timeout. 
-                If provided "seconds" argument is an integer you must provide second "microseconds" argument as integer too.'
-            );
         }
 
         if (is_float($seconds)) {

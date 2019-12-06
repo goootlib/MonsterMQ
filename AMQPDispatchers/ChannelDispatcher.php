@@ -6,7 +6,6 @@ namespace MonsterMQ\AMQPDispatchers;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ChannelDispatcher as ChannelDispatcherInterface;
-use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 
 /**
  * The ChannelDispatcher class provides methods for a client to establish a
@@ -19,7 +18,7 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
     /**
      * This method opens a channel to the server.
      *
-     * @param int $channel Channel to open.
+     * @param int $channel Channel number to open.
      */
     public function sendOpen(int $channel)
     {
@@ -42,20 +41,18 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
      * This method signals to the client that the channel is ready for use.
      *
      * @throws ProtocolException
-     * @throws \MonsterMQ\Exceptions\SessionException
+     * @throws SessionException
      */
     public function receiveOpenOk()
     {
-        $frameType = $this->receiveFrameType();
-        $this->setCurrentChannel($this->transmitter->receiveShort());
-        $this->setCurrentFrameSize($this->transmitter->receiveLong());
-
         [$classId, $methodId] = $this->receiveClassAndMethod();
+
         if ($classId != static::CHANNEL_CLASS_ID || $methodId != static::CHANNEL_OPEN_OK) {
             throw new ProtocolException(
                 "\"Unexpected method frame. Expecting class id '20' and method 
                 id '11'. '{$classId}' and '{$methodId}' given.\"");
         }
+        //Following argument reserved by AMQP
         $this->transmitter->receiveLongStr();
 
         $this->validateFrameDelimiter();
@@ -73,8 +70,6 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
      * @param int $channel Specified channel.
      * @param bool $active If true, the peer starts sending content frames.
      *                     If false, the peer stops sending content frames.
-     *
-     * @throws ProtocolException
      */
     public function sendFlow(int $channel, bool $active)
     {
@@ -91,6 +86,7 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
 
         $this->transmitter->sendLong($this->transmitter->bufferLength());
         $this->transmitter->sendBuffer();
+
         $this->sendFrameDelimiter();
     }
 
@@ -105,10 +101,6 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
      */
     public function receiveFlowOk(): bool
     {
-        $frameType = $this->receiveFrameType();
-        $this->setCurrentChannel($this->transmitter->receiveShort());
-        $this->setCurrentFrameSize($this->transmitter->receiveLong());
-
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
         if ($classId != static::CHANNEL_CLASS_ID && $methodId != static::CHANNEL_FLOW_OK) {
@@ -126,11 +118,14 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
     /**
      * Requests a channel close.
      *
-     * @param int $channel
-     * @param int|null $replyCode
-     * @param string|null $replyMessage
-     * @param int|null $classId
-     * @param int|null $methodID
+     * @param int         $channel      Channel number to close.
+     * @param int|null    $replyCode    Exception reply code.
+     * @param string|null $replyMessage Exception reply message.
+     * @param int|null    $classId      When the close is provoked by a method
+     *                                  exception, this is the class of the
+     *                                  method.
+     * @param int|null    $methodId     When the close is provoked by a method
+     *                                  exception, this is the ID of the method.
      */
     public function sendClose(
         int $channel,
@@ -139,7 +134,7 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
         int $classId = null,
         int $methodId = null
     ) {
-        $this->transmitter->sendOctet(1);
+        $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
@@ -158,11 +153,21 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
     }
 
     /**
-     * Confirm a channel close.
+     * Confirms a channel close.
+     *
+     * @throws ProtocolException
+     * @throws SessionException
      */
-    public function send_close_ok(){}
+    public function receiveCloseOk()
+    {
+        [$classId, $methodId] = $this->receiveClassAndMethod();
 
-    public function receive_close(){}
+        if ($classId != static::CHANNEL_CLASS_ID && $methodId != static::CHANNEL_CLOSE_OK) {
+            throw new ProtocolException("Unexpected method frame. Expecting 
+                class id '20' and method id '41'. '{$classId}' and '{$methodId}' given."
+            );
+        }
 
-    public function receive_close_ok(){}
+        $this->validateFrameDelimiter();
+    }
 }

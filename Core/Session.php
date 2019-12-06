@@ -11,7 +11,7 @@ use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispa
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
 
 /**
- * This class responsible for session opening.
+ * This class responsible for session processing.
  *
  * @author Gleb Zhukov <goootlib@gmail.com>
  */
@@ -29,7 +29,7 @@ class Session implements SessionInterface
      *
      * @var
      */
-    public $loggedIn;
+    protected $loggedIn;
 
     /**
      * Virtual host to be opened.
@@ -44,6 +44,30 @@ class Session implements SessionInterface
      * @var string
      */
     protected $locale = 'en_US';
+
+    /**
+     * Negotiated with server maximum channel number. Negotiation occurs by
+     * sending Connection.TuneOk method.
+     *
+     * @var int
+     */
+    protected $channelMaxNumber;
+
+    /**
+     * Negotiated with server maximum frame size. Negotiation occurs by sending
+     * Connection.TuneOk method.
+     *
+     * @var int
+     */
+    protected $frameMaxSize;
+
+    /**
+     * Negotiated with server heartbeat interval. Negotiation occurs by sending
+     * Connection.TuneOk method.
+     *
+     * @var int
+     */
+    protected $heartbeatInterval;
 
     /**
      * Connection constructor.
@@ -82,7 +106,9 @@ class Session implements SessionInterface
 
     public function logOut()
     {
-
+        if (!$this->loggedIn) {
+            return;
+        }
     }
 
     /**
@@ -140,6 +166,11 @@ class Session implements SessionInterface
     protected function tuneSession()
     {
         $properties = $this->connectionDispatcher->receiveTune();
+
+        $this->channelMaxNumber = $properties['channelMaxNumber'];
+        $this->frameMaxSize = $properties['frameMaxSize'];
+        $this->heartbeatInterval = $properties['heartbeat'];
+
         $this->connectionDispatcher->sendTuneOk(
             $properties['channelMaxNumber'],
             $properties['frameMaxSize'],
@@ -182,5 +213,45 @@ class Session implements SessionInterface
         $this->locale = $locale;
 
         return $this;
+    }
+
+    /**
+     * Whether session is started. And current user is logged in.
+     *
+     * @return bool Whether session is started.
+     */
+    public function loggedIn()
+    {
+        return $this->loggedIn;
+    }
+
+    /**
+     * Returns negotiated with server maximum channel number.
+     *
+     * @return int Limit for channels that might be opened..
+     */
+    public function channelMaxNumber()
+    {
+        return $this->channelMaxNumber;
+    }
+
+    /**
+     * Returns negotiated with server maximum frame size.
+     *
+     * @return int Limit for frame size.
+     */
+    public function frameMaxSize()
+    {
+        return $this->frameMaxSize;
+    }
+
+    /**
+     * Returns negotiated with server heartbeat interval.
+     *
+     * @return int Heartbeat interval.
+     */
+    public function heartbeatInterval()
+    {
+        return $this->heartbeatInterval;
     }
 }

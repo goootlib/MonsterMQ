@@ -86,5 +86,10 @@ interface ConnectionDispatcher extends AMQP
      * be discarded. The response to receiving a Close after sending Close must
      * be to send Close-Ok.
      */
-    public function sendClose(int $replyCode, string $replyText, int $classId, int $methodId);
+    public function sendClose(
+        int $replyCode,
+        string $replyText,
+        int $classId = null,
+        int $methodId = null
+    );
 }
