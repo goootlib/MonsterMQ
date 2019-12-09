@@ -10,9 +10,9 @@ use MonsterMQ\Connections\BinaryTransmitter;
 use MonsterMQ\Connections\Stream;
 use MonsterMQ\Core\Channel;
 use MonsterMQ\Core\Session;
-use MonsterMQ\Interfaces\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Core\Channel as ChannelInterface;
-use MonsterMQ\Interfaces\Stream as StreamInterface;
+use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
 
 
@@ -99,19 +99,21 @@ abstract class BaseClient
         $this->session->logIn($username, $password);
     }
 
-    public function changeChannel(int $channel)
+    public function changeChannel(int $channel = null)
     {
-        if (in_array($channel, ChannelDispatcher::$closedChannels)
-            || in_array($channel, ChannelDispatcher::$suspendedChannels)
-        ) {
-            return false;
-        } elseif (in_array($channel, ChannelDispatcher::$openedChannels) ) {
-            $this->currentChannelNumber = $channel;
-        } else {
-            $channel = $this->channel->open($channel);
-            $this->currentChannelNumber = $channel;
-            return $channel;
+        if (!is_null($channel)) {
+            if(in_array($channel, ChannelDispatcher::$closedChannels)
+                || in_array($channel, ChannelDispatcher::$suspendedChannels)){
+                return false;
+            } elseif (in_array($channel, ChannelDispatcher::$openedChannels)) {
+                return $this->currentChannelNumber = $channel;
+            }
         }
+
+        $channel = $this->channel->open($channel);
+        $this->currentChannelNumber = $channel;
+        return $channel;
+
     }
 
     /**
@@ -138,6 +140,9 @@ abstract class BaseClient
         return $this->session;
     }
 
+    /**
+     * @return \MonsterMQ\Interfaces\Core\Channel
+     */
     public function channel()
     {
         return $this->channel;

@@ -24,7 +24,7 @@ class Channel
     /**
      * Negotiated with server maximum channel number.
      *
-     * @var int
+     * @var SessionInterface
      */
     protected $session;
 
@@ -32,6 +32,7 @@ class Channel
      * Channel constructor.
      *
      * @param ChannelDispatcherInterface $dispatcher
+     * @param SessionInterface $session
      */
     public function __construct(ChannelDispatcherInterface $dispatcher, SessionInterface $session)
     {
@@ -52,29 +53,58 @@ class Channel
      */
     public function open(int $channelNumber = null)
     {
+        if (!is_null($channelNumber)) {
+            return $this->openConcreteChannel($channelNumber);
+        } else {
+            return $this->openGeneratedChannel();
+        }
+    }
+
+    /**
+     * Opens channel which number was specified by user.
+     *
+     * @param int $channelNumber Specified channel number
+     *
+     * @return bool|int Channel number that was opened. False if specified channel
+     *                  number already in use.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    protected function openConcreteChannel(int $channelNumber)
+    {
         $limit = $this->session->channelMaxNumber();
 
-        if (!is_null($channelNumber)) {
-
-            if (!in_array($channelNumber, ChannelDispatcher::$openedChannels)
-                && !in_array($channelNumber, ChannelDispatcher::$suspendedChannels)
-                && $channelNumber < $limit
-            ) {
-                $this->channelDispatcher->sendOpen($channelNumber);
-                $this->channelDispatcher->receiveCloseOk();
+        if (!$this->channelIsOpened($channelNumber) && $channelNumber < $limit) {
+            $this->channelDispatcher->sendOpen($channelNumber);
+            $this->channelDispatcher->receiveOpenOk();
+            ChannelDispatcher::$openedChannels[] = $channelNumber;
+            return $channelNumber;
+        } else {
+            if ($this->channelIsOpened($channelNumber)) {
                 return $channelNumber;
             } else {
-                if (in_array($channelNumber, ChannelDispatcher::$openedChannels)
-                    || in_array($channelNumber, ChannelDispatcher::$suspendedChannels)) {
-                    return $channelNumber;
-                } else {
-                    return false;
-                }
+                return false;
             }
         }
+    }
+
+    /**
+     * Opens first available channel number. Limited by number negotiated
+     * with server during session establishment.
+     *
+     * @return int|bool Channel number that was opened. False if there was no
+     *                  free channel number.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    protected function openGeneratedChannel()
+    {
+        $limit = $this->session->channelMaxNumber();
 
         for ($channelNumber = 1; $channelNumber < $limit; $channelNumber++) {
-            if (!in_array($channelNumber, ChannelDispatcher::$openedChannels)) {
+            if (!$this->channelIsOpened($channelNumber)) {
                 $this->channelDispatcher->sendOpen($channelNumber);
                 $this->channelDispatcher->receiveOpenOk();
                 ChannelDispatcher::$openedChannels[] = $channelNumber;
@@ -83,8 +113,24 @@ class Channel
                 continue;
             }
         }
-
         return false;
+    }
+
+    /**
+     * Checks whether channel is already opened.
+     *
+     * @param int $channelNumber Channel number to check.
+     *
+     * @return bool Whether channel is already opened.
+     */
+    public function channelIsOpened(int $channelNumber): bool
+    {
+        if (in_array($channelNumber, ChannelDispatcher::$openedChannels)
+            || in_array($channelNumber, ChannelDispatcher::$suspendedChannels)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
