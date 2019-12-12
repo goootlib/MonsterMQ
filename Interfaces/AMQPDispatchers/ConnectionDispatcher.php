@@ -2,7 +2,10 @@
 
 namespace MonsterMQ\Interfaces\AMQPDispatchers;
 
+use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\PackerException;
+use MonsterMQ\Exceptions\ProtocolException;
+use MonsterMQ\Exceptions\SessionException;
 
 interface ConnectionDispatcher extends AMQP
 {
@@ -77,19 +80,37 @@ interface ConnectionDispatcher extends AMQP
     public function receiveOpenOk();
 
     /**
-     * Request a connection close.This method indicates that the sender wants
-     * to close the connection. This may be due to internal conditions (e.g.
-     * a forced shut-down) or due to an error handling a specific method, i.e.
-     * an exception. When a close is due to an exception, the sender provides
-     * the class and method id of the method which caused the exception. After
-     * sending this method, any received methods except Close and Close-OK MUST
-     * be discarded. The response to receiving a Close after sending Close must
-     * be to send Close-Ok.
+     * Initiates connection closure. This may be due to internal conditions
+     * (e.g. a forced shut-down) or due to an error handling a specific method,
+     * i.e. an exception. When a close is due to an exception, the sender
+     * provides the class and method id of the method which caused the
+     * exception.
+     *
+     * @param int $replyCode    Reply code.
+     * @param string $replyText Reply text.
+     * @param int $classId      When the close is provoked by a method
+     *                          exception, this is the class of the method.
+     * @param int $methodId     When the close is provoked by a method
+     *                          exception, this is the ID of the method.
      */
     public function sendClose(
-        int $replyCode,
-        string $replyText,
-        int $classId = null,
-        int $methodId = null
+        int $replyCode = 0,
+        string $replyText = '',
+        int $classId = 0,
+        int $methodId = 0
     );
+
+    /**
+     * Waits for incoming close-ok AMQP method in oder to close the connection.
+     * Client may close the connection if there was no incoming close-ok method
+     * during the close-ok timout, which may be specified by setCloseOkTimout.
+     *
+     * @param int $timeout How long to wait incoming CloseOk method before
+     *                     forcing current session closure.
+     *
+     * @throws ConnectionException
+     * @throws SessionException
+     * @throws ProtocolException
+     */
+    public function receiveCloseOK(int $timeout = 130);
 }

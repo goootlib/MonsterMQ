@@ -1,7 +1,5 @@
 <?php
 
-use MonsterMQ\AMQPDispatchers\ChannelDispatcher;
-
 spl_autoload_register('loadMonsterClass');
 
 header('Content-Type:text/html,charset=utf-8');
@@ -11,6 +9,7 @@ try {
 
     $producer = new MonsterMQ\Client\Producer();
     $producer->logIn();
+    $producer->disconnect();
 
     echo '</pre>';
     /*

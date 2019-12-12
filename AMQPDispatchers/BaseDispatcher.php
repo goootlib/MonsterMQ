@@ -3,12 +3,10 @@
 
 namespace MonsterMQ\AMQPDispatchers;
 
-use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
 use MonsterMQ\Interfaces\AMQPDispatchers\AMQP;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
-use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 
 /**
  * This is a base class for AMQP dispatchers, it includes common logic needed
@@ -19,26 +17,11 @@ use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 abstract class BaseDispatcher implements AMQP
 {
     /**
-     * Stream connection instance
-     *
-     * @var StreamInterface
-     */
-    protected $socket;
-
-    /**
      * Binary transmitter instance.
      *
      * @var BinaryTransmitterInterface
      */
     protected $transmitter;
-
-    /**
-     * Timeout after which session and socket connection will be closed
-     * without waiting for incoming close-ok method.
-     *
-     * @var int
-     */
-    protected $closeOkTimeout = 130;
 
     /**
      * Current frame size used by termination methods.
@@ -78,24 +61,11 @@ abstract class BaseDispatcher implements AMQP
     /**
      * BaseDispatcher constructor.
      *
-     * @param StreamInterface $socket
      * @param BinaryTransmitterInterface $transmitter
      */
-    public function __construct(StreamInterface $socket, BinaryTransmitterInterface $transmitter)
+    public function __construct(BinaryTransmitterInterface $transmitter)
     {
-        $this->socket = $socket;
         $this->transmitter = $transmitter;
-    }
-
-    /**
-     * Sets timeout after which connection will be closed without waiting for
-     * incoming close-ok method.
-     *
-     * @param int $timeout
-     */
-    public function setCloseOkTimeout(int $timeout)
-    {
-        $this->closeOkTimeout = $timeout;
     }
 
     /**
@@ -356,7 +326,7 @@ abstract class BaseDispatcher implements AMQP
      */
     protected function validateFrameDelimiter()
     {
-        if("\xCE" != $this->transmitter->receiveRaw(1)){
+        if(static::FRAME_DELIMITER != $this->transmitter->receiveRaw(1)){
             throw new ProtocolException(
                 'Frame delimiter is invalid. It must be 0xCE.'
             );
@@ -368,6 +338,6 @@ abstract class BaseDispatcher implements AMQP
      */
     protected function sendFrameDelimiter()
     {
-        $this->transmitter->sendRaw("\xCE");
+        $this->transmitter->sendRaw(static::FRAME_DELIMITER);
     }
 }

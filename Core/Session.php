@@ -25,13 +25,6 @@ class Session implements SessionInterface
     protected $connectionDispatcher;
 
     /**
-     * Whether AMQP connection is established.
-     *
-     * @var
-     */
-    protected $loggedIn;
-
-    /**
      * Virtual host to be opened.
      *
      * @var string
@@ -91,24 +84,24 @@ class Session implements SessionInterface
      */
     public function logIn(string $username = 'guest', string $password = 'guest')
     {
-		if ($this->loggedIn) {
-			return;
-		}
-		
         $this->startSession($username, $password);
 
         $this->tuneSession();
 
         $this->openVirtualHost();
-
-        $this->loggedIn = true;
     }
 
+    /**
+     * Terminates current session.
+     *
+     * @throws ProtocolException
+     * @throws \MonsterMQ\Exceptions\ConnectionException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
     public function logOut()
     {
-        if (!$this->loggedIn) {
-            return;
-        }
+        $this->connectionDispatcher->sendClose();
+        $this->connectionDispatcher->receiveCloseOK();
     }
 
     /**
@@ -213,16 +206,6 @@ class Session implements SessionInterface
         $this->locale = $locale;
 
         return $this;
-    }
-
-    /**
-     * Whether session is started. And current user is logged in.
-     *
-     * @return bool Whether session is started.
-     */
-    public function loggedIn()
-    {
-        return $this->loggedIn;
     }
 
     /**

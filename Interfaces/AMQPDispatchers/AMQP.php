@@ -34,4 +34,15 @@ interface AMQP
     public const CHANNEL_FLOW_OK = 21;
     public const CHANNEL_CLOSE = 40;
     public const CHANNEL_CLOSE_OK = 41;
+
+    public const EXCHANGE_CLASS_ID = 40;
+
+    public const EXCHANGE_DECLARE = 10;
+    public const EXCHANGE_DECLARE_OK = 11;
+    public const EXCHANGE_DELETE = 20;
+    public const EXCHANGE_DELETE_OK = 21;
+    public const EXCHANGE_BIND = 30;
+    public const EXCHANGE_BIND_OK = 31;
+    public const EXCHANGE_UNBIND = 40;
+    public const EXCHANGE_UNBIND_OK = 41;
 }

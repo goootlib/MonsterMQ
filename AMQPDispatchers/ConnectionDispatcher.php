@@ -234,7 +234,7 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
      * @param int $methodId     When the close is provoked by a method
      *                          exception, this is the ID of the method.
      */
-    public function sendClose(int $replyCode, string $replyText, int $classId = null, int $methodId = null)
+    public function sendClose(int $replyCode = 0, string $replyText = '', int $classId = 0, int $methodId = 0)
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort(static::SYSTEM_CHANNEL);
@@ -259,15 +259,18 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
      * Client may close the connection if there was no incoming close-ok method
      * during the close-ok timout, which may be specified by setCloseOkTimout.
      *
+     * @param int $timeout How long to wait incoming CloseOk method before
+     *                     forcing current session closure.
+     *
      * @throws ConnectionException
      * @throws SessionException
      * @throws ProtocolException
      */
-    public function receiveCloseOK()
+    public function receiveCloseOK(int $timeout = 130)
     {
         $start = time();
         do {
-            if (time() >= $start + $this->closeOkTimeout) {
+            if (time() >= $start + $timeout) {
                 throw new ConnectionException(
                     "close-ok method expectation have been timed out. Connection has been closed."
                 );
@@ -275,9 +278,6 @@ class ConnectionDispatcher extends BaseDispatcher implements ConnectionDispatche
 
             [$classId, $methodId] = $this->receiveClassAndMethod();
 
-            if ($classId == static::CONNECTION_CLASS_ID && $methodId == static::CONNECTION_CLOSE_OK) {
-                $this->socket->close();
-            }
         } while($classId != static::CONNECTION_CLASS_ID && $methodId != static::CONNECTION_CLOSE_OK);
     }
 }
