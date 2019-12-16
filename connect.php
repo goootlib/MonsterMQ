@@ -9,8 +9,13 @@ try {
 
     $producer = new MonsterMQ\Client\Producer();
     $producer->logIn();
+    $producer->newDirectExchange('my_direct')->declare();
+    $producer->newFanoutExchange('my_fanout')->setAutodelete()->declare();
+    $producer->newTopicExchange('my_topic')->setDurable()->declare();
+    $producer->exchange('my_direct')->bind('my_topic', 'abc');
+    $producer->exchange('my_direct')->unbind('my_topic', 'abc');
+    $producer->exchange('my_direct')->delete();
     $producer->disconnect();
-
     echo '</pre>';
     /*
 	$producer->session()->locale('en_US')->virtualHost('/')->logIn('guest','guest');

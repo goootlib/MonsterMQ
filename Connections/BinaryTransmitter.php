@@ -86,6 +86,21 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
+     * Sends a set of bits accumulated in octet.
+     *
+     * @param array $setOfBits A set of bits.
+     */
+    public function sendSeveralBits(array $setOfBits)
+    {
+        $bits = 0;
+        foreach ($setOfBits as $offset => $value) {
+            $value = $value ? 1 : 0;
+            $bits |= ($value << $offset);
+        }
+        $this->sendOctet($bits);
+    }
+
+    /**
      * Sends or stores in buffer unsigned integer as 8 bits.
      *
      * @param int $number Must be between 0 and 255.

@@ -6,6 +6,14 @@ namespace MonsterMQ\Interfaces\Connections;
 
 interface BinaryTransmitter
 {
+
+    /**
+     * Sends a set of bits accumulated in octet.
+     *
+     * @param array $setOfBits A set of bits.
+     */
+    public function sendSeveralBits(array $setOfBits);
+
     /**
      * Translates and sends unsigned integer as 8 bits.
      *

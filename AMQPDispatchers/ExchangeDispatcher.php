@@ -56,20 +56,19 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
         $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(static::EXCHANGE_CLASS_ID);
+        $this->transmitter->sendShort(static::EXCHANGE_DECLARE);
         //Following short argument reserved by AMQP
         $this->transmitter->sendShort(0);
         $this->transmitter->sendShortStr($name);
         $this->transmitter->sendShortStr($type);
         $passive = $passive ? 1 : 0;
-        $this->transmitter->sendOctet($passive);
         $durable = $durable ? 1 : 0;
-        $this->transmitter->sendOctet($durable);
         $autodelete = $autodelete ? 1 : 0;
-        $this->transmitter->sendOctet($autodelete);
         $internal = $internal ? 1 : 0;
-        $this->transmitter->sendOctet($internal);
         $noWait = $noWait ? 1 : 0;
-        $this->transmitter->sendOctet($noWait);
+        $setOfBits = [$passive, $durable, $autodelete, $internal, $noWait];
+        $this->transmitter->sendSeveralBits($setOfBits);
         $this->transmitter->sendFieldTable($arguments);
         $this->transmitter->disableBuffering();
 
@@ -115,13 +114,15 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
         $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(static::EXCHANGE_CLASS_ID);
+        $this->transmitter->sendShort(static::EXCHANGE_DELETE);
         //The following short argument reserved by AMQP
         $this->transmitter->sendShort(0);
         $this->transmitter->sendShortStr($name);
         $unused = $unused ? 1 : 0;
-        $this->transmitter->sendOctet($unused);
         $noWait = $noWait ? 1 : 0;
-        $this->transmitter->sendOctet($noWait);
+        $setOfbits = [$unused, $noWait];
+        $this->transmitter->sendSeveralBits($setOfbits);
         $this->transmitter->disableBuffering();
 
         $this->transmitter->sendLong($this->transmitter->bufferLength());
@@ -161,12 +162,14 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
      *                            and semantics of these arguments depends on
      *                            the exchange class.
      */
-    public function sendBind(int $channel, string $destination, string $source, string $routingKey, bool $noWait, array $arguments = [])
+    public function sendBind(int $channel, string $destination, string $source, string $routingKey, bool $noWait = false, array $arguments = [])
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
         $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(static::EXCHANGE_CLASS_ID);
+        $this->transmitter->sendShort(static::EXCHANGE_BIND);
         //Following short argument reserved by AMQP
         $this->transmitter->sendShort(0);
         $this->transmitter->sendShortStr($destination);
@@ -224,6 +227,8 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
         $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
+        $this->transmitter->sendShort(static::EXCHANGE_CLASS_ID);
+        $this->transmitter->sendShort(static::EXCHANGE_UNBIND);
         //Following short field reserved by AMQP
         $this->transmitter->sendShort(0);
         $this->transmitter->sendShortStr($destination);

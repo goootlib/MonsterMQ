@@ -124,18 +124,26 @@ class ExchangeDeclarator
 
     /**
      * Sets exchange durable. Durable exchanges remains after server restart.
+     *
+     * @return $this
      */
     public function setDurable()
     {
         $this->durable = true;
+
+        return $this;
     }
 
     /**
      * Sets exchange autodelete. Autodelete exchanges delete if no consumers
      * left.
+     *
+     * @return $this
      */
     public function setAutodelete()
     {
         $this->autodelete = true;
+
+        return $this;
     }
 }

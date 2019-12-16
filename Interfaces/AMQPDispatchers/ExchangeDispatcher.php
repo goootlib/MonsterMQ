@@ -94,8 +94,8 @@ interface ExchangeDispatcher extends AMQP
         string $destination,
         string $source,
         string $routingKey,
-        bool $noWait,
-        array $arguments
+        bool $noWait = false,
+        array $arguments = []
     );
 
     /**
