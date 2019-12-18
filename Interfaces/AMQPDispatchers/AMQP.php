@@ -45,4 +45,17 @@ interface AMQP
     public const EXCHANGE_BIND_OK = 31;
     public const EXCHANGE_UNBIND = 40;
     public const EXCHANGE_UNBIND_OK = 41;
+
+    public const QUEUE_CLASS_ID = 50;
+
+    public const QUEUE_DECLARE = 10;
+    public const QUEUE_DECLARE_OK = 11;
+    public const QUEUE_BIND = 20;
+    public const QUEUE_BIND_OK = 21;
+    public const QUEUE_UNBIND = 50;
+    public const QUEUE_UNBIND_OK = 51;
+    public const QUEUE_PURGE = 30;
+    public const QUEUE_PURGE_OK = 31;
+    public const QUEUE_DELETE = 40;
+    public const QUEUE_DELETE_OK = 41;
 }

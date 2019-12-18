@@ -103,7 +103,7 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::CHANNEL_CLASS_ID && $methodId != static::CHANNEL_FLOW_OK) {
+        if ($classId != static::CHANNEL_CLASS_ID || $methodId != static::CHANNEL_FLOW_OK) {
             throw new ProtocolException("Unexpected method frame. Expecting class id '20' and method 
                 id '21'. '{$classId}' and '{$methodId}' given.");
         }
@@ -162,7 +162,7 @@ class ChannelDispatcher extends BaseDispatcher implements ChannelDispatcherInter
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::CHANNEL_CLASS_ID && $methodId != static::CHANNEL_CLOSE_OK) {
+        if ($classId != static::CHANNEL_CLASS_ID || $methodId != static::CHANNEL_CLOSE_OK) {
             throw new ProtocolException("Unexpected method frame. Expecting 
                 class id '20' and method id '41'. '{$classId}' and '{$methodId}' given."
             );

@@ -36,7 +36,7 @@ interface ExchangeDispatcher extends AMQP
      *                           on the server implementation.
      */
     public function sendDeclare(
-        int $channek,
+        int $channel,
         string $name,
         string $type = 'direct',
         bool $passive = false,

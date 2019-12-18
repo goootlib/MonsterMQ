@@ -15,7 +15,7 @@ try {
     $producer->exchange('my_direct')->bind('my_topic', 'abc');
     $producer->exchange('my_direct')->unbind('my_topic', 'abc');
     $producer->exchange('my_direct')->delete();
-    $producer->disconnect();
+
     echo '</pre>';
     /*
 	$producer->session()->locale('en_US')->virtualHost('/')->logIn('guest','guest');
@@ -46,7 +46,7 @@ try {
     echo $e->getMessage();
     echo $e->getFile();
     echo $e->getLine();
-    var_dump($e->getTraceAsString());
+    var_dump($e->getTrace());
     echo '</pre>';
 
 }

@@ -87,7 +87,7 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::EXCHANGE_CLASS_ID && $methodId != static::EXCHANGE_DECLARE_OK) {
+        if ($classId != static::EXCHANGE_CLASS_ID || $methodId != static::EXCHANGE_DECLARE_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '40' and method 
                 id '11'. '{$classId}' and '{$methodId}' given.");
@@ -140,7 +140,7 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::EXCHANGE_CLASS_ID && $methodId != static::EXCHANGE_DELETE_OK) {
+        if ($classId != static::EXCHANGE_CLASS_ID || $methodId != static::EXCHANGE_DELETE_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '40' and method 
                 id '21'. '{$classId}' and '{$methodId}' given."
@@ -195,7 +195,7 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::EXCHANGE_CLASS_ID && $methodId != static::EXCHANGE_BIND_OK) {
+        if ($classId != static::EXCHANGE_CLASS_ID || $methodId != static::EXCHANGE_BIND_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '40' and method 
                 id '11'. '{$classId}' and '{$methodId}' given."
@@ -254,7 +254,7 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != static::EXCHANGE_CLASS_ID && $methodId != static::EXCHANGE_UNBIND_OK) {
+        if ($classId != static::EXCHANGE_CLASS_ID || $methodId != static::EXCHANGE_UNBIND_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '40' and method 
                 id '41'. '{$classId}' and '{$methodId}' given."
