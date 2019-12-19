@@ -15,21 +15,21 @@ class Exchange implements ExchangeInterface
      *
      * @var BaseClient
      */
-    public $client;
+    protected $client;
 
     /**
      * Exchange dispatcher instance.
      *
      * @var ExchangeDispatcherInterface
      */
-    public $exchangeDispatcher;
+    protected $exchangeDispatcher;
 
     /**
      * Source exchange for deleting, binding and unbinding.
      *
      * @var string
      */
-    public $currentExchange;
+    protected $currentExchangeName;
 
     /**
      * Exchange constructor.
@@ -43,16 +43,6 @@ class Exchange implements ExchangeInterface
     }
 
     /**
-     * Sets current exchange for further operations.
-     *
-     * @param string $exchange Current exchange name.
-     */
-    public function setCurrentExchange(string $exchange)
-    {
-        $this->currentExchange = $exchange;
-    }
-
-    /**
      * Deletes current exchange.
      *
      * @throws \MonsterMQ\Exceptions\ProtocolException
@@ -62,7 +52,7 @@ class Exchange implements ExchangeInterface
     {
         $this->exchangeDispatcher->sendDelete(
             $this->client->currentChannel(),
-            $this->currentExchange
+            $this->currentExchangeName
         );
         $this->exchangeDispatcher->receiveDeleteOk();
     }
@@ -80,7 +70,7 @@ class Exchange implements ExchangeInterface
     {
         $this->exchangeDispatcher->sendBind(
             $this->client->currentChannel(),
-            $this->currentExchange,
+            $this->currentExchangeName,
             $source,
             $routingKey
         );
@@ -101,10 +91,20 @@ class Exchange implements ExchangeInterface
     {
         $this->exchangeDispatcher->sendUnbind(
             $this->client->currentChannel(),
-            $this->currentExchange,
+            $this->currentExchangeName,
             $source,
             $routingKey
         );
         $this->exchangeDispatcher->receiveUnbindOk();
+    }
+
+    /**
+     * Sets current exchange for further operations.
+     *
+     * @param string $exchange Current exchange name.
+     */
+    public function setCurrentExchangeName(string $exchange)
+    {
+        $this->currentExchangeName = $exchange;
     }
 }

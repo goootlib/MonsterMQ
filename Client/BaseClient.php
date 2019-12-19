@@ -5,17 +5,20 @@ namespace MonsterMQ\Client;
 use MonsterMQ\AMQPDispatchers\ChannelDispatcher;
 use MonsterMQ\AMQPDispatchers\ConnectionDispatcher;
 use MonsterMQ\AMQPDispatchers\ExchangeDispatcher;
+use MonsterMQ\AMQPDispatchers\QueueDispatcher;
 use MonsterMQ\Connections\BinaryTransmitter;
 use MonsterMQ\Connections\Stream;
 use MonsterMQ\Core\Channel;
 use MonsterMQ\Core\Exchange;
 use MonsterMQ\Core\ExchangeDeclarator;
 use MonsterMQ\Core\Session;
+use MonsterMQ\Core\Queue;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Core\Channel as ChannelInterface;
 use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
 use MonsterMQ\Interfaces\Core\ExchangeDeclarator as ExchangeDeclaratorInterface;
+use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
 
 abstract class BaseClient
@@ -30,7 +33,15 @@ abstract class BaseClient
 
     protected $exchangeDeclarator;
 
+    /**
+     * @var \MonsterMQ\Interfaces\Core\Exchange
+     */
     protected $exchange;
+
+    /**
+     * @var \MonsterMQ\Interfaces\Core\Queue
+     */
+    protected $queue;
 
     protected $currentChannelNumber = 0;
 
@@ -40,7 +51,8 @@ abstract class BaseClient
         SessionInterface $session = null,
         ChannelInterface $channel = null,
         ExchangeDeclaratorInterface $exchangeDeclarator = null,
-        ExchangeInterface $exchange = null
+        ExchangeInterface $exchange = null,
+        QueueInterface $queue = null
     ) {
         $this->setSocket($socket);
 
@@ -53,6 +65,8 @@ abstract class BaseClient
         $this->setExchangeDeclarator($exchangeDeclarator);
 
         $this->setExchange($exchange);
+
+        $this->setQueue($queue);
     }
 
     public function __destruct()
@@ -111,6 +125,15 @@ abstract class BaseClient
             $this->exchange = $exchange;
         } else {
             $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter), $this);
+        }
+    }
+
+    protected function setQueue(QueueInterface $queue = null)
+    {
+        if (!is_null($queue)) {
+            $this->queue = $queue;
+        } else {
+            $this->queue = new Queue(new QueueDispatcher($this->transmitter), $this);
         }
     }
 
@@ -230,7 +253,18 @@ abstract class BaseClient
      */
     public function exchange($currentExchange)
     {
-        $this->exchange->setCurrentExchange($currentExchange);
+        $this->exchange->setCurrentExchangeName($currentExchange);
         return $this->exchange;
+    }
+
+    /**
+     * @param string $queueName
+     *
+     * @return \MonsterMQ\Interfaces\Core\Queue
+     */
+    public function queue(string $queueName)
+    {
+        $this->queue->setCurrentQueueName($queueName);
+        return $this->queue;
     }
 }

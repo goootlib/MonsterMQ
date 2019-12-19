@@ -46,7 +46,7 @@ interface QueueDispatcher extends AMQP
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receiveDeclareOk();
+    public function receiveDeclareOk(): array ;
 
     /**
      * Bind queue to an exchange.
@@ -120,7 +120,7 @@ interface QueueDispatcher extends AMQP
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receivePurgeOk();
+    public function receivePurgeOk(): int;
 
     /**
      * This method deletes a queue. When a queue is deleted any pending messages
@@ -151,5 +151,5 @@ interface QueueDispatcher extends AMQP
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receiveDeleteOk();
+    public function receiveDeleteOk(): int;
 }

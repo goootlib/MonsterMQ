@@ -78,7 +78,7 @@ class QueueDispatcher extends BaseDispatcher implements QueueDispatcherInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receiveDeclareOk()
+    public function receiveDeclareOk(): array
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
@@ -246,7 +246,7 @@ class QueueDispatcher extends BaseDispatcher implements QueueDispatcherInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receivePurgeOk()
+    public function receivePurgeOk(): int
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
@@ -313,7 +313,7 @@ class QueueDispatcher extends BaseDispatcher implements QueueDispatcherInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function receiveDeleteOk()
+    public function receiveDeleteOk(): int
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 

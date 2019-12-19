@@ -257,7 +257,7 @@ class ExchangeDispatcher extends BaseDispatcher implements ExchangeDispatcherInt
         if ($classId != static::EXCHANGE_CLASS_ID || $methodId != static::EXCHANGE_UNBIND_OK) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting class id '40' and method 
-                id '41'. '{$classId}' and '{$methodId}' given."
+                id '51'. '{$classId}' and '{$methodId}' given."
             );
         }
 

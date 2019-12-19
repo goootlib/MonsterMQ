@@ -14,7 +14,17 @@ try {
     $producer->newTopicExchange('my_topic')->setDurable()->declare();
     $producer->exchange('my_direct')->bind('my_topic', 'abc');
     $producer->exchange('my_direct')->unbind('my_topic', 'abc');
-    $producer->exchange('my_direct')->delete();
+
+    $producer->queue('queue-1')->declare()->bind('my_direct', 'cba');
+    $producer->queue('queue-2')->setDurable()->declare()->bind('my_topic','abc');
+    $producer->queue('queue-3')->setAutodeleted()->declare()->bind('my_direct', 'cab');
+    $producer->queue('queue-4')->setExclusive()->declare()->bind('my_direct', 'bca');
+    $producer->queue('queue-1')->unbind('my_direct', 'abc');
+    var_dump($producer->queue('queue-1')->deleteIfUnused());
+    var_dump($producer->queue('queue-2')->deleteIfEmpty());
+    var_dump($producer->queue('queue-3')->delete());
+    var_dump($producer->queue('queue-4')->purge());
+
 
     echo '</pre>';
     /*

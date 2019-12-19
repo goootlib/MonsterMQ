@@ -50,7 +50,7 @@ interface ChannelDispatcher extends AMQP
      * @throws ProtocolException
      * @throws SessionException
      */
-    public function receiveFlowOk();
+    public function receiveFlowOk(): bool;
 
     /**
      * Requests a channel close.

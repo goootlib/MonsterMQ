@@ -11,7 +11,7 @@ interface Exchange
      *
      * @param string $exchange Current exchange name.
      */
-    public function setCurrentExchange(string $exchange);
+    public function setCurrentExchangeName(string $exchange);
 
     /**
      * Deletes current exchange.

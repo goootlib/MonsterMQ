@@ -44,7 +44,7 @@ interface AMQP
     public const EXCHANGE_BIND = 30;
     public const EXCHANGE_BIND_OK = 31;
     public const EXCHANGE_UNBIND = 40;
-    public const EXCHANGE_UNBIND_OK = 41;
+    public const EXCHANGE_UNBIND_OK = 51;
 
     public const QUEUE_CLASS_ID = 50;
 
