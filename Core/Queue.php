@@ -3,15 +3,16 @@
 
 namespace MonsterMQ\Core;
 
-use MonsterMQ\Interfaces\AMQPDispatchers\QueueDispatcher as QueueDispatcherInterface;
 use MonsterMQ\Client\BaseClient;
+use MonsterMQ\Interfaces\AMQPDispatchers\QueueDispatcher as QueueDispatcherInterface;
+use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
 
 /**
  * This class provides API for queue management for end-users.
  *
  *@author Gleb Zhukov <goootlib@gmail.com>
  */
-class Queue
+class Queue implements QueueInterface
 {
     /**
      * Queue dispatcher instance.
@@ -272,7 +273,7 @@ class Queue
      *
      * @return $this
      */
-    public function setAutodeleted()
+    public function setAutodelete()
     {
         $this->autodelete = true;
 

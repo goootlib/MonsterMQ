@@ -13,6 +13,7 @@ use MonsterMQ\Core\Exchange;
 use MonsterMQ\Core\ExchangeDeclarator;
 use MonsterMQ\Core\Session;
 use MonsterMQ\Core\Queue;
+use MonsterMQ\Interfaces\AMQPDispatchers\BasicDispatcher;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Core\Channel as ChannelInterface;
 use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
@@ -25,13 +26,14 @@ abstract class BaseClient
 {
     protected $socket;
 
+    /**
+     * @var BinaryTransmitterInterface
+     */
     protected $transmitter;
 
     protected $session;
 
     protected $channel;
-
-    protected $exchangeDeclarator;
 
     /**
      * @var \MonsterMQ\Interfaces\Core\Exchange
@@ -43,6 +45,8 @@ abstract class BaseClient
      */
     protected $queue;
 
+    protected $basicDispatcher;
+
     protected $currentChannelNumber = 0;
 
     public function __construct(
@@ -50,9 +54,9 @@ abstract class BaseClient
         BinaryTransmitterInterface $transmitter = null,
         SessionInterface $session = null,
         ChannelInterface $channel = null,
-        ExchangeDeclaratorInterface $exchangeDeclarator = null,
         ExchangeInterface $exchange = null,
-        QueueInterface $queue = null
+        QueueInterface $queue = null,
+        BasicDispatcher $basicDispatcher = null
     ) {
         $this->setSocket($socket);
 
@@ -62,11 +66,11 @@ abstract class BaseClient
 
         $this->setChannel($channel);
 
-        $this->setExchangeDeclarator($exchangeDeclarator);
-
         $this->setExchange($exchange);
 
         $this->setQueue($queue);
+
+        $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter);
     }
 
     public function __destruct()
@@ -95,7 +99,7 @@ abstract class BaseClient
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
-            $this->session = new Session(new ConnectionDispatcher($this->transmitter));
+            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this));
         } else {
             $this->session = $session;
         }
@@ -104,18 +108,9 @@ abstract class BaseClient
     protected function setChannel(ChannelInterface $channel = null)
     {
         if (is_null($channel)) {
-            $this->channel = new Channel(new ChannelDispatcher($this->transmitter), $this->session);
+            $this->channel = new Channel(new ChannelDispatcher($this->transmitter, $this), $this->session);
         }else{
             $this->channel = $channel;
-        }
-    }
-
-    protected function setExchangeDeclarator(ExchangeDeclaratorInterface $exchangeDeclarator = null)
-    {
-        if (!is_null($exchangeDeclarator)) {
-            $this->exchangeDeclarator = $exchangeDeclarator;
-        } else {
-            $this->exchangeDeclarator = new ExchangeDeclarator(new ExchangeDispatcher($this->transmitter), $this);
         }
     }
 
@@ -176,36 +171,36 @@ abstract class BaseClient
     }
 
     /**
-     * @param string $name
-     * @return \MonsterMQ\Core\ExchangeDeclarator
+     *
+     * @return \MonsterMQ\Interfaces\Core\Exchange
      */
     public function newDirectExchange(string $name)
     {
-        $this->exchangeDeclarator->setName($name);
-        $this->exchangeDeclarator->setType('direct');
-        return $this->exchangeDeclarator;
+        $this->exchange->setCurrentExchangeName($name);
+        $this->exchange->setExchangeType('direct');
+        return $this->exchange;
     }
 
     /**
-     * @param string $name
-     * @return \MonsterMQ\Core\ExchangeDeclarator
+     *
+     * @return \MonsterMQ\Interfaces\Core\Exchange
      */
     public function newFanoutExchange(string $name)
     {
-        $this->exchangeDeclarator->setName($name);
-        $this->exchangeDeclarator->setType('fanout');
-        return $this->exchangeDeclarator;
+        $this->exchange->setCurrentExchangeName($name);
+        $this->exchange->setExchangeType('fanout');
+        return $this->exchange;
     }
 
     /**
-     * @param string $name
-     * @return \MonsterMQ\Core\ExchangeDeclarator
+     *
+     * @return \MonsterMQ\Interfaces\Core\Exchange
      */
     public function newTopicExchange(string $name)
     {
-        $this->exchangeDeclarator->setName($name);
-        $this->exchangeDeclarator->setType('topic');
-        return $this->exchangeDeclarator;
+        $this->exchange->setCurrentExchangeName($name);
+        $this->exchange->setExchangeType('topic');
+        return $this->exchange;
     }
 
     public function disconnect()
@@ -247,13 +242,12 @@ abstract class BaseClient
     }
 
     /**
-     * @param $currentExchange
      *
      * @return \MonsterMQ\Interfaces\Core\Exchange
      */
-    public function exchange($currentExchange)
+    public function exchange(string $name)
     {
-        $this->exchange->setCurrentExchangeName($currentExchange);
+        $this->exchange->setCurrentExchangeName($name);
         return $this->exchange;
     }
 

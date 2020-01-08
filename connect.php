@@ -17,32 +17,29 @@ try {
 
     $producer->queue('queue-1')->declare()->bind('my_direct', 'cba');
     $producer->queue('queue-2')->setDurable()->declare()->bind('my_topic','abc');
-    $producer->queue('queue-3')->setAutodeleted()->declare()->bind('my_direct', 'cab');
+    $producer->queue('queue-3')->setAutodelete()->declare()->bind('my_direct', 'cab');
     $producer->queue('queue-4')->setExclusive()->declare()->bind('my_direct', 'bca');
     $producer->queue('queue-1')->unbind('my_direct', 'abc');
-    var_dump($producer->queue('queue-1')->deleteIfUnused());
-    var_dump($producer->queue('queue-2')->deleteIfEmpty());
-    var_dump($producer->queue('queue-3')->delete());
-    var_dump($producer->queue('queue-4')->purge());
+
+    $producer->queue('queue-1')->deleteIfUnused();
+    $producer->queue('queue-2')->deleteIfEmpty();
+    $producer->queue('queue-3')->delete();
+    $producer->queue('queue-4')->purge();
 
 
     echo '</pre>';
     /*
-	$producer->session()->locale('en_US')->virtualHost('/')->logIn('guest','guest');
-	
 	$producer->events()->channelSuspension(function($channel) use ($producer){
-		//handle flow suspension
+		//handle channel suspension
 	})->channelClosure(function($channel) use ($producer){
 		//handle channel closure
-	})->anotherChannelIncoming(function($channel) use ($producer){
-		//handle incoming on channel that is not currently selected
 	});
-	
+
+    $producer->qos()->prefetchSize(1024)->prefetchCount(10)->perConsumer()->apply();
+
     $producer->newDirectExchange('name')->setPersistent()->declare();
     $producer->newFanoutExchange('another name')->setPersistent()->declare();
     $producer->newTopicExchange('yet another name')->setPersistent()->declare();
-	
-    $producer->newQueue('queue name')->declare()->bind('binding name');
 	
 	$producer->defaultRoutingKey('routing key');
     $producer->overrideDefaultExchange('exchange name');

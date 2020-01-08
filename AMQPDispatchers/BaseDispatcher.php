@@ -3,10 +3,12 @@
 
 namespace MonsterMQ\AMQPDispatchers;
 
+use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
 use MonsterMQ\Interfaces\AMQPDispatchers\AMQP;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
+use MonsterMQ\Interfaces\Core\Session as SessionInterface;
 
 /**
  * This is a base class for AMQP dispatchers, it includes common logic needed
@@ -24,6 +26,13 @@ abstract class BaseDispatcher implements AMQP
     protected $transmitter;
 
     /**
+     * Session instance.
+     *
+     * @var SessionInterface
+     */
+    protected $session;
+
+    /**
      * Current frame size used by termination methods.
      *
      * @var int
@@ -36,6 +45,13 @@ abstract class BaseDispatcher implements AMQP
      * @var int
      */
     protected $currentChannel;
+
+    /**
+     * Timestamp of last socket read.
+     *
+     * @var int
+     */
+    protected $lastRead;
 
     /**
      * Channels that were opened.
@@ -63,9 +79,10 @@ abstract class BaseDispatcher implements AMQP
      *
      * @param BinaryTransmitterInterface $transmitter
      */
-    public function __construct(BinaryTransmitterInterface $transmitter)
+    public function __construct(BinaryTransmitterInterface $transmitter, Session $session)
     {
         $this->transmitter = $transmitter;
+        $this->session = $session;
     }
 
     /**
@@ -89,13 +106,34 @@ abstract class BaseDispatcher implements AMQP
     }
 
     /**
-     * Stores current frame size.
+     * Validates and stores current frame size.
      *
      * @param int $size
+     *
+     * @throws ProtocolException
      */
     protected function setCurrentFrameSize(int $size)
     {
+        $this->validateFrameSize($size);
         $this->currentFrameSize = $size;
+    }
+
+    /**
+     * Validates frame size.
+     *
+     * @param $size Frame size.
+     *
+     * @throws ProtocolException
+     */
+    protected function validateFrameSize($size)
+    {
+        if (!is_null($this->session->frameMaxSize()) && $size > $this->session->frameMaxSize()) {
+            throw new ProtocolException(
+                "Frame size exceeded negotiated frame max size value. 
+                Negotiated value is ".$this->session->frameMaxSize().". 
+                Incoming frame size value is ".$size
+            );
+        }
     }
 
     /**
@@ -115,20 +153,46 @@ abstract class BaseDispatcher implements AMQP
      * @return int Frame type of incoming frame.
      *
      * @throws ProtocolException
+     * @throws ConnectionException
      */
     protected function receiveFrameType(): ?int
     {
+        $this->lastRead = time();
+
         while (!is_null($frametype = $this->transmitter->receiveOctet())) {
             if ($frametype == static::HEARTBEAT_FRAME_TYPE) {
                 $this->transmitter->receiveShort();
                 $this->transmitter->receiveLong();
                 $this->validateFrameDelimiter();
+                $this->sendHeartbeat();
+                $this->lastRead = time();
                 continue;
             } else {
+                $this->lastRead = time();
                 return $frametype;
             }
         }
+
+        $heartbeatInterval = $this->session->heartbeatInterval() ?? 60;
+        $timeout = $heartbeatInterval * 2;
+        if (time() >= $this->lastRead + $timeout) {
+            throw new ConnectionException(
+                "Heartbeat missed. Server does not respond."
+            );
+        }
+
         return null;
+    }
+
+    /**
+     * Sends heartbeat frame.
+     */
+    protected function sendHeartbeat()
+    {
+        $this->transmitter->sendOctet(self::HEARTBEAT_FRAME_TYPE);
+        $this->transmitter->sendShort(self::SYSTEM_CHANNEL);
+        $this->transmitter->receiveLong(0);
+        $this->sendFrameDelimiter();
     }
 
     /**
@@ -139,8 +203,9 @@ abstract class BaseDispatcher implements AMQP
      *
      * @throws SessionException
      * @throws ProtocolException
+     * @throws ConnectionException
      */
-    protected function receiveClassAndMethod(): array
+    public function receiveClassAndMethod(): array
     {
         do {
             $this->receiveFrameType();
@@ -153,6 +218,7 @@ abstract class BaseDispatcher implements AMQP
             $connectionClosure = ($classId == static::CONNECTION_CLASS_ID) && ($methodId == static::CONNECTION_CLOSE);
             $flowControl = ($classId == static::CHANNEL_CLASS_ID) && ($methodId == static::CHANNEL_FLOW);
             $channelClosure = ($classId == static::CHANNEL_CLASS_ID) && ($methodId == static::CHANNEL_CLOSE);
+            $ackIncome = ($classId == self::BASIC_CLASS_ID) && ($methodId == self::BASIC_ACK);
 
             if ($connectionClosure) {
                 $this->handleConnectionClose();
@@ -164,6 +230,10 @@ abstract class BaseDispatcher implements AMQP
 
             if ($channelClosure) {
                 $this->handleChannelClosure();
+            }
+
+            if ($ackIncome) {
+                $this->handleAckIncome();
             }
 
         } while ($connectionClosure || $flowControl || $channelClosure);
@@ -219,6 +289,19 @@ abstract class BaseDispatcher implements AMQP
         self::$closedChannels[] = $this->currentChannel;
 
         $this->sendChannelCloseOk();
+    }
+
+    /**
+     * Handles incoming of acknowledgement.
+     *
+     * @throws ProtocolException
+     */
+    protected function handleAckIncome()
+    {
+        $this->transmitter->receiveLongLong();
+        $this->transmitter->receiveOctet();
+
+        $this->validateFrameDelimiter();
     }
 
     /**

@@ -8,6 +8,11 @@ use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Interfaces\AMQPDispatchers\ExchangeDispatcher as ExchangeDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
 
+/**
+ * This class provides API for managing exchanges.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
 class Exchange implements ExchangeInterface
 {
     /**
@@ -32,6 +37,29 @@ class Exchange implements ExchangeInterface
     protected $currentExchangeName;
 
     /**
+     * Type of the currently declaring exchange.
+     *
+     * @var string
+     */
+    protected $type = 'direct';
+
+    /**
+     * Whether currently declared exchange is durable
+     *
+     * @var bool
+     */
+    protected $durable = false;
+
+    /**
+     * Whether currently declaring exchange will be deleted if no consumers
+     * left.
+     *
+     * @var bool
+     */
+    protected $autodelete = false;
+
+
+    /**
      * Exchange constructor.
      *
      * @param ExchangeDispatcherInterface $dispatcher
@@ -40,6 +68,38 @@ class Exchange implements ExchangeInterface
     {
         $this->exchangeDispatcher = $dispatcher;
         $this->client = $client;
+    }
+
+    /**
+     * Declares exchanges with currently set arguments.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    public function declare()
+    {
+        $this->exchangeDispatcher->sendDeclare(
+            $this->client->currentChannel(),
+            $this->currentExchangeName,
+            $this->type,
+            false,
+            $this->durable,
+            $this->autodelete
+        );
+        $this->exchangeDispatcher->receiveDeclareOk();
+
+        $this->flushArguments();
+    }
+
+    /**
+     * Flushes arguments for declaration.
+     */
+    protected function flushArguments()
+    {
+        $this->currentExchangeName = null;
+        $this->type = 'direct';
+        $this->durable = false;
+        $this->autodelete = false;
     }
 
     /**
@@ -66,12 +126,12 @@ class Exchange implements ExchangeInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function bind(string $source, string $routingKey)
+    public function bind(string $to, string $routingKey)
     {
         $this->exchangeDispatcher->sendBind(
             $this->client->currentChannel(),
             $this->currentExchangeName,
-            $source,
+            $to,
             $routingKey
         );
         $this->exchangeDispatcher->receiveBindOk();
@@ -87,12 +147,12 @@ class Exchange implements ExchangeInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function unbind(string $source, string $routingKey)
+    public function unbind(string $from, string $routingKey)
     {
         $this->exchangeDispatcher->sendUnbind(
             $this->client->currentChannel(),
             $this->currentExchangeName,
-            $source,
+            $from,
             $routingKey
         );
         $this->exchangeDispatcher->receiveUnbindOk();
@@ -106,5 +166,40 @@ class Exchange implements ExchangeInterface
     public function setCurrentExchangeName(string $exchange)
     {
         $this->currentExchangeName = $exchange;
+    }
+
+    /**
+     * Sets exchange type going to be declared.
+     *
+     * @param string $type Exchange type going to be declared.
+     */
+    public function setExchangeType(string $type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * Sets exchange durable. Durable exchanges remains after server restart.
+     *
+     * @return $this
+     */
+    public function setDurable()
+    {
+        $this->durable = true;
+
+        return $this;
+    }
+
+    /**
+     * Sets exchange autodelete. Autodelete exchanges delete if no consumers
+     * left.
+     *
+     * @return $this
+     */
+    public function setAutodelete()
+    {
+        $this->autodelete = true;
+
+        return $this;
     }
 }

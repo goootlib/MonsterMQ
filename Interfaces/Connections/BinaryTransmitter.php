@@ -36,6 +36,13 @@ interface BinaryTransmitter
     public function sendLong(int $number);
 
     /**
+     * Sends or stores in buffer unsigned integer as 64 bits.
+     *
+     * @param int $number Integer to be packed.
+     */
+    public function sendLongLong(int $number);
+
+    /**
      * Sends string up to 256 bytes length.
      *
      * @param string $value

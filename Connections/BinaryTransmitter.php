@@ -155,6 +155,17 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     }
 
     /**
+     * Sends or stores in buffer unsigned integer as 64 bits.
+     *
+     * @param int $number Integer to be packed.
+     */
+    public function sendLongLong(int $number)
+    {
+        $binary = pack('J', $number);
+        $this->sendRaw($binary);
+    }
+
+    /**
      * Sends or stores in buffer strings up to 256 bytes length.
      *
      * @param string $value String to be sent.

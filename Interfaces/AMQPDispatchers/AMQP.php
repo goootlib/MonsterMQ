@@ -58,4 +58,24 @@ interface AMQP
     public const QUEUE_PURGE_OK = 31;
     public const QUEUE_DELETE = 40;
     public const QUEUE_DELETE_OK = 41;
+
+    public const BASIC_CLASS_ID = 60;
+
+    public const BASIC_QOS = 10;
+    public const BASIC_QOS_OK = 11;
+    public const BASIC_CONSUME = 20;
+    public const BASIC_CONSUME_OK = 21;
+    public const BASIC_CANCEL = 30;
+    public const BASIC_CANCEL_OK = 31;
+    public const BASIC_PUBLISH = 40;
+    public const BASIC_RETURN = 50;
+    public const BASIC_DELIVER = 60;
+    public const BASIC_GET = 70;
+    public const BASIC_GET_OK = 71;
+    public const BASIC_GET_EMPTY = 72;
+    public const BASIC_ACK = 80;
+    public const BASIC_REJECT = 90;
+    public const BASIC_RECOVER = 110;
+    public const BASIC_RECOVER_OK = 111;
+    public const BASIC_NACK = 120;
 }

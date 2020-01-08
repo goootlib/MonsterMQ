@@ -177,6 +177,28 @@ class Stream implements StreamInterface
     }
 
     /**
+     * Disables blocking mode. In non-blocking mode an fgets() call will always
+     * return right away while in blocking mode it will wait for data to become
+     * available on the stream.
+     */
+    public function disableBlockingMode()
+    {
+        if ($this->isConnected()) {
+            stream_set_blocking($this->streamResource, false);
+        }
+    }
+
+    /**
+     * Enables blocking mode.
+     */
+    public function enableBlockingMode()
+    {
+        if ($this->isConnected()) {
+            stream_set_blocking($this->streamResource, true);
+        }
+    }
+
+    /**
      * Recreates context resource.
      */
     protected function refreshContext()

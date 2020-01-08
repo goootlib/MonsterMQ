@@ -14,6 +14,21 @@ interface Exchange
     public function setCurrentExchangeName(string $exchange);
 
     /**
+     * Sets exchange type going to be declared.
+     *
+     * @param string $type Exchange type going to be declared.
+     */
+    public function setExchangeType(string $type);
+
+    /**
+     * Declares exchanges with currently set arguments.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    public function declare();
+
+    /**
      * Deletes current exchange.
      *
      * @throws \MonsterMQ\Exceptions\ProtocolException
@@ -43,4 +58,19 @@ interface Exchange
      * @throws \MonsterMQ\Exceptions\SessionException
      */
     public function unbind(string $source, string $routingKey);
+
+    /**
+     * Sets exchange durable. Durable exchanges remains after server restart.
+     *
+     * @return \MonsterMQ\Core\Exchange
+     */
+    public function setDurable();
+
+    /**
+     * Sets exchange autodelete. Autodelete exchanges delete if no consumers
+     * left.
+     *
+     * @return \MonsterMQ\Core\Exchange
+     */
+    public function setAutodelete();
 }
