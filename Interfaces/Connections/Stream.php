@@ -53,7 +53,7 @@ Interface Stream
      * Which ip address and port will be used for binding.
      *
      * @param int $port    Port to be used for binding.
-     * @param int $address IP address to be used for binding.
+     * @param string $address IP address to be used for binding.
      *
      * @return Stream For chaining purposes.
      */
@@ -72,7 +72,7 @@ Interface Stream
      * This method writes data to previously
      * configured socket connection.
      *
-     * @param $data Data that will be transmitted
+     * @param string $data Data that will be transmitted
      * @return void
      */
     public function writeRaw (string $data): int;
@@ -81,10 +81,10 @@ Interface Stream
      * This method reads from the established
      * network connection.
      *
-     * @param $bytes Number of bytes to be read
+     * @param int $length Number of bytes to be read
      * @return string Data received through connection
      */
-    public function readRaw (int $bytes): ?string;
+    public function readRaw (int $length): ?string;
 
     /**
      * Closes current network connection.

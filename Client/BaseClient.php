@@ -11,6 +11,7 @@ use MonsterMQ\Connections\Stream;
 use MonsterMQ\Core\Channel;
 use MonsterMQ\Core\Exchange;
 use MonsterMQ\Core\ExchangeDeclarator;
+use MonsterMQ\Core\Qos;
 use MonsterMQ\Core\Session;
 use MonsterMQ\Core\Queue;
 use MonsterMQ\Interfaces\AMQPDispatchers\BasicDispatcher;
@@ -18,7 +19,7 @@ use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInter
 use MonsterMQ\Interfaces\Core\Channel as ChannelInterface;
 use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
 use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
-use MonsterMQ\Interfaces\Core\ExchangeDeclarator as ExchangeDeclaratorInterface;
+use MonsterMQ\Interfaces\Core\Qos as QosInterface;
 use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
 
@@ -45,6 +46,11 @@ abstract class BaseClient
      */
     protected $queue;
 
+    /**
+     * @var \MonsterMQ\Interfaces\Core\Qos
+     */
+    protected $qos;
+
     protected $basicDispatcher;
 
     protected $currentChannelNumber = 0;
@@ -56,6 +62,7 @@ abstract class BaseClient
         ChannelInterface $channel = null,
         ExchangeInterface $exchange = null,
         QueueInterface $queue = null,
+        QosInterface $qos = null,
         BasicDispatcher $basicDispatcher = null
     ) {
         $this->setSocket($socket);
@@ -70,7 +77,9 @@ abstract class BaseClient
 
         $this->setQueue($queue);
 
-        $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter);
+        $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter, $this);
+
+        $this->setQos($qos);
     }
 
     public function __destruct()
@@ -119,7 +128,7 @@ abstract class BaseClient
         if (!is_null($exchange)) {
             $this->exchange = $exchange;
         } else {
-            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter), $this);
+            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter, $this), $this);
         }
     }
 
@@ -128,7 +137,16 @@ abstract class BaseClient
         if (!is_null($queue)) {
             $this->queue = $queue;
         } else {
-            $this->queue = new Queue(new QueueDispatcher($this->transmitter), $this);
+            $this->queue = new Queue(new QueueDispatcher($this->transmitter, $this), $this);
+        }
+    }
+
+    protected function setQos(QosInterface $qos = null)
+    {
+        if (!is_null($qos)) {
+            $this->qos = $qos;
+        } else {
+            $this->qos = new Qos($this->basicDispatcher, $this);
         }
     }
 
@@ -145,10 +163,10 @@ abstract class BaseClient
 
         $this->session->logIn($username, $password);
 
-        $this->changeChannel(1);
+        $this->changeChannel();
     }
 
-    public function changeChannel(int $channel = null)
+    public function changeChannel($channel = null)
     {
         if (!is_null($channel)) {
             if(in_array($channel, ChannelDispatcher::$closedChannels)
@@ -260,5 +278,13 @@ abstract class BaseClient
     {
         $this->queue->setCurrentQueueName($queueName);
         return $this->queue;
+    }
+
+    /**
+     * @return \MonsterMQ\Interfaces\Core\Qos
+     */
+    public function qos()
+    {
+        return $this->qos;
     }
 }

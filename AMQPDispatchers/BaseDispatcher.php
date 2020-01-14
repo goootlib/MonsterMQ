@@ -3,6 +3,7 @@
 
 namespace MonsterMQ\AMQPDispatchers;
 
+use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
@@ -26,11 +27,11 @@ abstract class BaseDispatcher implements AMQP
     protected $transmitter;
 
     /**
-     * Session instance.
+     * Client instance.
      *
-     * @var SessionInterface
+     * @var BaseClient
      */
-    protected $session;
+    protected $client;
 
     /**
      * Current frame size used by termination methods.
@@ -78,11 +79,12 @@ abstract class BaseDispatcher implements AMQP
      * BaseDispatcher constructor.
      *
      * @param BinaryTransmitterInterface $transmitter
+     * @param BaseClient $client
      */
-    public function __construct(BinaryTransmitterInterface $transmitter, Session $session)
+    public function __construct(BinaryTransmitterInterface $transmitter, BaseClient $client)
     {
         $this->transmitter = $transmitter;
-        $this->session = $session;
+        $this->client = $client;
     }
 
     /**
@@ -127,7 +129,7 @@ abstract class BaseDispatcher implements AMQP
      */
     protected function validateFrameSize($size)
     {
-        if (!is_null($this->session->frameMaxSize()) && $size > $this->session->frameMaxSize()) {
+        if (!is_null($this->client->session()->frameMaxSize()) && $size > $this->client->session()->frameMaxSize()) {
             throw new ProtocolException(
                 "Frame size exceeded negotiated frame max size value. 
                 Negotiated value is ".$this->session->frameMaxSize().". 
@@ -167,13 +169,17 @@ abstract class BaseDispatcher implements AMQP
                 $this->sendHeartbeat();
                 $this->lastRead = time();
                 continue;
+            } elseif ($frametype == static::CONTENT_HEADER_FRAME_TYPE) {
+                $this->lastRead = time();
+                $this->sendHeartbeat();
+                return $frametype;
             } else {
                 $this->lastRead = time();
                 return $frametype;
             }
         }
 
-        $heartbeatInterval = $this->session->heartbeatInterval() ?? 60;
+        $heartbeatInterval = $this->client->session()->heartbeatInterval() ?? 60;
         $timeout = $heartbeatInterval * 2;
         if (time() >= $this->lastRead + $timeout) {
             throw new ConnectionException(
@@ -191,7 +197,7 @@ abstract class BaseDispatcher implements AMQP
     {
         $this->transmitter->sendOctet(self::HEARTBEAT_FRAME_TYPE);
         $this->transmitter->sendShort(self::SYSTEM_CHANNEL);
-        $this->transmitter->receiveLong(0);
+        $this->transmitter->sendLong(0);
         $this->sendFrameDelimiter();
     }
 
@@ -236,7 +242,7 @@ abstract class BaseDispatcher implements AMQP
                 $this->handleAckIncome();
             }
 
-        } while ($connectionClosure || $flowControl || $channelClosure);
+        } while ($connectionClosure || $flowControl || $channelClosure || $ackIncome);
 
         return [$classId, $methodId];
     }

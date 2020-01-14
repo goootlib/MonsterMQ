@@ -19,6 +19,7 @@ try {
     $producer->queue('queue-2')->setDurable()->declare()->bind('my_topic','abc');
     $producer->queue('queue-3')->setAutodelete()->declare()->bind('my_direct', 'cab');
     $producer->queue('queue-4')->setExclusive()->declare()->bind('my_direct', 'bca');
+    $producer->queue('queue-5')->setDurable()->declare()->bind('my_direct', 'bac');
     $producer->queue('queue-1')->unbind('my_direct', 'abc');
 
     $producer->queue('queue-1')->deleteIfUnused();
@@ -26,6 +27,15 @@ try {
     $producer->queue('queue-3')->delete();
     $producer->queue('queue-4')->purge();
 
+    $producer->qos()->prefetchCount(10)->perConsumer()->apply();
+    $producer->publish('message-1', 'bac', 'my_direct');
+    $producer->disconnect();
+
+    /**
+    $consumer = new \MonsterMQ\Client\Consumer();
+    $consumer->logIn();
+    $consumer->noAck()->startConsume('queue-5');
+    $consumer->stopConsume();
 
     echo '</pre>';
     /*
@@ -35,24 +45,17 @@ try {
 		//handle channel closure
 	});
 
-    $producer->qos()->prefetchSize(1024)->prefetchCount(10)->perConsumer()->apply();
-
-    $producer->newDirectExchange('name')->setPersistent()->declare();
-    $producer->newFanoutExchange('another name')->setPersistent()->declare();
-    $producer->newTopicExchange('yet another name')->setPersistent()->declare();
-	
 	$producer->defaultRoutingKey('routing key');
     $producer->overrideDefaultExchange('exchange name');
 	
 	$producer->changeChannel(1);
 	$producer->currentChannel();
-	$consumer->useMultipleChannels([1,2]);
     */
 }catch (\Exception $e) {
     echo '</pre>';
-    echo $e->getMessage();
-    echo $e->getFile();
-    echo $e->getLine();
+    echo $e->getMessage()."</br>";
+    echo $e->getFile()."</br>";
+    echo $e->getLine()."</br>";
     var_dump($e->getTrace());
     echo '</pre>';
 

@@ -3,10 +3,12 @@
 
 namespace MonsterMQ\AMQPDispatchers;
 
+use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
+use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Core\AuthenticationStrategy as AuthenticationStrategyInterface;
 
 /**

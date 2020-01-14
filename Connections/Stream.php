@@ -348,7 +348,7 @@ class Stream implements StreamInterface
                 throw new NetworkException('Error sending data.');
             }
 
-            $written += $result;
+            $written += strlen($result);
         }
 
         return $written;
@@ -357,21 +357,31 @@ class Stream implements StreamInterface
     /**
      * Reads from the socket.
      *
-     * @param int $bytes Number of bytes to be read.
+     * @param int $length Number of bytes to be read.
      *
      * @return string Data received from remote peer.
      *
      * @throws NetworkException In case of connection closure or reading error.
      */
-    public function readRaw(int $bytes): ?string
+    public function readRaw(int $length): ?string
     {
         if($this->connectionClosed()){
             throw new NetworkException('Connection was closed.');
         }
-        if ($bytes == 0) {
+
+        if ($length == 0) {
             return null;
         }
-        return fread($this->streamResource, $bytes);
+
+        $read = 0;
+        $result = '';
+        while ($read < $length) {
+            $dataChunk = fread($this->streamResource, $length - $read);
+            $read += strlen($dataChunk);
+            $result .= $dataChunk;
+        }
+
+        return $result;
     }
 
     /**

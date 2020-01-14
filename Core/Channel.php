@@ -43,7 +43,7 @@ class Channel
     /**
      * Open a channel for use.
      *
-     * @param int|null $channelNumber Channel to open.
+     * @param $channelNumber Channel to open.
      *
      * @return int|bool Returns channel number that was opened. False in case
      *                  of there no available channel numbers.
@@ -51,7 +51,7 @@ class Channel
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function open(int $channelNumber = null)
+    public function open($channelNumber = null)
     {
         if (!is_null($channelNumber)) {
             return $this->openConcreteChannel($channelNumber);

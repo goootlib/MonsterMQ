@@ -2,12 +2,9 @@
 
 namespace MonsterMQ\AMQPDispatchers;
 
-use MonsterMQ\Client\Consumer;
 use MonsterMQ\Exceptions\ConnectionException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Interfaces\AMQPDispatchers\BasicDispatcher as BasicDispatcherInterface;
-use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
-use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
 
 /**
  * This dispatcher provides basic capabilities for interaction between client
@@ -17,42 +14,12 @@ use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispa
  */
 class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
 {
-
-    /**
-     * Connection dispatcher instance. Needed for closing connection in case of
-     * content header class id mismatch.
-     *
-     * @var ConnectionDispatcherInterface
-     */
-    protected $connectionDispatcher;
-
-    /**
-     * Consumer instance. Needed for enqueueing messages which arrive on
-     * channels which aren't currently used.
-     *
-     * @var Consumer
-     */
-    protected $consumer;
-
     /**
      * Delivery tag of last received message.
      *
      * @var int
      */
     protected $currentDeliveryTag;
-
-    public function __construct(
-        BinaryTransmitterInterface $transmitter,
-        ConnectionDispatcherInterface $connectionDispatcher,
-        Consumer $consumer
-    ) {
-        parent::__construct($transmitter);
-
-        $this->connectionDispatcher = $connectionDispatcher;
-
-        $this->consumer = $consumer;
-
-    }
 
     /**
      * This method requests a specific quality of service. The QoS can be
@@ -62,7 +29,7 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
      *                            of service.
      * @param int  $prefetchSize  Size of message which may be sent in advance.
      * @param int  $prefetchCount Number of messages which may be sent in advance.
-     * @param bool $global        False enables qos per consumer. True - per connection.
+     * @param bool $global        False enables qos per consumer. True - per channel.
      */
     public function sendQos(int $channel, int $prefetchSize = 0, int $prefetchCount = 0, bool $global = false)
     {
@@ -198,7 +165,7 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
     public function sendCancel(int $channel, string $consumerTag, bool $noWait = false)
     {
         $this->transmitter->sendOctet(static::METHOD_FRAME_TYPE);
-        $this->transmitter->receiveShort($channel);
+        $this->transmitter->sendShort($channel);
 
         $this->transmitter->enableBuffering();
         $this->transmitter->sendShort(static::BASIC_CLASS_ID);
@@ -413,15 +380,9 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
             );
         }
         $this->setCurrentChannel($usedChannel = $this->transmitter->receiveShort());
-        if ($usedChannel == 0) {
-            $this->connectionDispatcher->sendClose(504);
-        }
         $this->transmitter->receiveLong();
 
         $classId = $this->transmitter->receiveShort();
-        if ($classId != static::BASIC_CLASS_ID) {
-            $this->connectionDispatcher->sendClose(501);
-        }
         $this->transmitter->receiveShort();
         $bodySize = $this->transmitter->receiveLongLong();
         //Receive two bytes of properties

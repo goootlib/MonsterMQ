@@ -9,12 +9,12 @@ interface Channel
     /**
      * Open a channel for use.
      *
-     * @param int $channel Channel to open.
+     * @param $channel Channel to open.
      *
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function open(int $channel);
+    public function open($channel);
 
     /**
      * Requests server to reenable flow on specified channel.
