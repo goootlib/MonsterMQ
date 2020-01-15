@@ -29,6 +29,9 @@ try {
 
     $producer->qos()->prefetchCount(10)->perConsumer()->apply();
     $producer->publish('message-1', 'bac', 'my_direct');
+    $producer->overrideDefaultExchange('my_direct');
+    $producer->defaultRoutingKey('bac');
+    $producer->publish('message-2');
     $producer->disconnect();
 
     /**

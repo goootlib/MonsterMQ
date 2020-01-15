@@ -342,13 +342,15 @@ class Stream implements StreamInterface
         $dataLength = strlen($data);
         $written = 0;
         while ($written < $dataLength){
-            $result = fwrite($this->streamResource, $data, static::WRITE_BUFFER_SIZE);
+            $result = fwrite($this->streamResource, $data, self::WRITE_BUFFER_SIZE);
 
             if($result === false){
                 throw new NetworkException('Error sending data.');
             }
 
-            $written += strlen($result);
+            $written += $result;
+
+            $data = substr($data, $written);
         }
 
         return $written;
@@ -373,13 +375,7 @@ class Stream implements StreamInterface
             return null;
         }
 
-        $read = 0;
-        $result = '';
-        while ($read < $length) {
-            $dataChunk = fread($this->streamResource, $length - $read);
-            $read += strlen($dataChunk);
-            $result .= $dataChunk;
-        }
+        $result = fread($this->streamResource, $length);
 
         return $result;
     }

@@ -483,7 +483,7 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
         if ($methodId == self::BASIC_GET_EMPTY) {
             $this->transmitter->receiveShortStr();
             $this->validateFrameDelimiter();
-            return null;
+            return false;
         } else {
             $this->setCurrentDeliveryTag($this->transmitter->receiveLongLong());
             $redelivered = $this->transmitter->receiveOctet();

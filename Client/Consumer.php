@@ -37,7 +37,7 @@ class Consumer extends BaseClient
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function startConsume($queue)
+    public function consume($queue)
     {
         $this->basicDispatcher->sendConsume($this->currentChannel(), $queue, '', false, $this->noAck, false, false, []);
         $this->consumerTags[$this->currentChannel()][] = $this->basicDispatcher->receiveConsumeOk();
@@ -83,6 +83,41 @@ class Consumer extends BaseClient
     }
 
     /**
+     * Synchronously obtains of messages.
+     *
+     * @param string $queue Queue from which message will be obtained.
+     *
+     * @return array|false Returns array which first element is message and
+     *                     second is channel number. If false was returned
+     *                     it means requested queue is empty.
+     *
+     * @throws \MonsterMQ\Exceptions\ConnectionException
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    public function get(string $queue)
+    {
+        $this->basicDispatcher->sendGet($this->currentChannel(), $queue, $this->noAck);
+        return $this->basicDispatcher->receiveGetOkOrGetEmpty();
+    }
+
+    /**
+     * Acknowledges last message.
+     */
+    public function ackLast()
+    {
+        $this->basicDispatcher->sendAck($this->currentChannel(), null, false);
+    }
+
+    /**
+     * Acknowledges all outstanding message.
+     */
+    public function ackAll()
+    {
+        $this->basicDispatcher->sendAck($this->currentChannel(), 0, true);
+    }
+
+    /**
      * Disables acknowledgements for incoming messages.
      *
      * @return $this
@@ -91,5 +126,40 @@ class Consumer extends BaseClient
     {
         $this->noAck = true;
         return $this;
+    }
+
+    /**
+     * This method allows a client to reject last incoming message.
+     */
+    public function rejectLast($requeue = false)
+    {
+        $this->basicDispatcher->sendNack($this->currentChannel(), null, false, $requeue);
+    }
+
+    /**
+     * This method allows a client to reject all unacknowledged message.
+     */
+    public function rejectAll($requeue = false)
+    {
+        $this->basicDispatcher->sendNack($this->currentChannel(), 0, true, $requeue);
+    }
+
+    /**
+     * This method asks the server to redeliver all unacknowledged messages
+     * on a specified channel.
+     *
+     * @param bool $requeue If this argument is false, the message will be redelivered
+     *                      to the original recipient. If this argument is true, the server
+     *                      will attempt to requeue the message, potentially then
+     *                      delivering it to an alternative subscriber.
+     *
+     * @throws \MonsterMQ\Exceptions\ConnectionException
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
+    public function redeliver($requeue = false)
+    {
+        $this->basicDispatcher->sendRecover($this->currentChannel(), $requeue);
+        $this->basicDispatcher->receiveRecoverOk();
     }
 }
