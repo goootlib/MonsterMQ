@@ -6,6 +6,7 @@ namespace MonsterMQ\Core;
 use MonsterMQ\AMQPDispatchers\ChannelDispatcher;
 use MonsterMQ\Interfaces\AMQPDispatchers\ChannelDispatcher as ChannelDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * This class responsible for channel handling operations
@@ -29,15 +30,23 @@ class Channel
     protected $session;
 
     /**
+     * Logger instance.
+     *
+     * @var Logger
+     */
+    protected $logger;
+
+    /**
      * Channel constructor.
      *
      * @param ChannelDispatcherInterface $dispatcher
      * @param SessionInterface $session
      */
-    public function __construct(ChannelDispatcherInterface $dispatcher, SessionInterface $session)
+    public function __construct(ChannelDispatcherInterface $dispatcher, SessionInterface $session, LoggerInterface $logger)
     {
         $this->channelDispatcher = $dispatcher;
         $this->session = $session;
+        $this->logger = $logger;
     }
 
     /**

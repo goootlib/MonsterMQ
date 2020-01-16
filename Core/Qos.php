@@ -5,6 +5,7 @@ namespace MonsterMQ\Core;
 use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Interfaces\AMQPDispatchers\BasicDispatcher as BasicDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Qos as QosInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * This class provides API for end-users to adjust quality of service.
@@ -26,6 +27,13 @@ class Qos implements QosInterface
      * @var BaseClient
      */
     protected $client;
+
+    /**
+     * Logger instance.
+     *
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * Size of message which may be sent in advance.
@@ -53,10 +61,11 @@ class Qos implements QosInterface
      *
      * @param BasicDispatcherInterface $basicDispatcher
      */
-    public function __construct(BasicDispatcherInterface $basicDispatcher, BaseClient $client)
+    public function __construct(BasicDispatcherInterface $basicDispatcher, BaseClient $client, LoggerInterface $logger)
     {
         $this->basicDispatcher = $basicDispatcher;
         $this->client = $client;
+        $this->logger = $logger;
     }
 
     /**
@@ -105,6 +114,13 @@ class Qos implements QosInterface
      */
     public function apply()
     {
+        $channel = $this->client->currentChannel();
+        $global = $this->global ? "per channel" : "per consumer";
+        $this->logger->write(
+            "Appling quality of service prefetch count {$this->prefetchCount} {$global} 
+            on channel {$channel}"
+        );
+
         $this->basicDispatcher->sendQos(
             $this->client->currentChannel(),
             $this->prefetchSize,

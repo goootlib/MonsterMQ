@@ -7,6 +7,7 @@ namespace MonsterMQ\Core;
 use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Interfaces\AMQPDispatchers\ExchangeDispatcher as ExchangeDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * This class provides API for managing exchanges.
@@ -28,6 +29,13 @@ class Exchange implements ExchangeInterface
      * @var ExchangeDispatcherInterface
      */
     protected $exchangeDispatcher;
+
+    /**
+     * Logger instance.
+     *
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * Source exchange for deleting, binding and unbinding.
@@ -64,10 +72,11 @@ class Exchange implements ExchangeInterface
      *
      * @param ExchangeDispatcherInterface $dispatcher
      */
-    public function __construct(ExchangeDispatcherInterface $dispatcher, BaseClient $client)
+    public function __construct(ExchangeDispatcherInterface $dispatcher, BaseClient $client, LoggerInterface $logger)
     {
         $this->exchangeDispatcher = $dispatcher;
         $this->client = $client;
+        $this->logger = $logger;
     }
 
     /**
@@ -78,6 +87,14 @@ class Exchange implements ExchangeInterface
      */
     public function declare()
     {
+        $channel = $this->client->currentChannel();
+        $durable = $this->durable ? 'durable' : "";
+        $autodelete = $this->autodelete ? "autodelete" : "";
+        $this->logger->write(
+            "Declaring {$durable} {$autodelete} exchange on channel {$channel} with name '{$this->currentExchangeName}'
+            and type '{$this->type}'"
+        );
+
         $this->exchangeDispatcher->sendDeclare(
             $this->client->currentChannel(),
             $this->currentExchangeName,
@@ -110,6 +127,9 @@ class Exchange implements ExchangeInterface
      */
     public function delete()
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Deleting exchange with name {$this->currentExchangeName} on channel {$channel}");
+
         $this->exchangeDispatcher->sendDelete(
             $this->client->currentChannel(),
             $this->currentExchangeName
@@ -128,6 +148,12 @@ class Exchange implements ExchangeInterface
      */
     public function bind(string $to, string $routingKey)
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write(
+            "Binding exchange '{$this->currentExchangeName}' to exchange '{$to}'
+             with routing key '{$routingKey}' on channel {$channel}"
+        );
+
         $this->exchangeDispatcher->sendBind(
             $this->client->currentChannel(),
             $this->currentExchangeName,
@@ -149,6 +175,12 @@ class Exchange implements ExchangeInterface
      */
     public function unbind(string $from, string $routingKey)
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write(
+            "Unbinding exchange {$this->currentExchangeName} from exchange {$from} 
+            with routing key {$routingKey} on channel {$channel}"
+        );
+
         $this->exchangeDispatcher->sendUnbind(
             $this->client->currentChannel(),
             $this->currentExchangeName,

@@ -6,6 +6,7 @@ namespace MonsterMQ\Core;
 use MonsterMQ\Client\BaseClient;
 use MonsterMQ\Interfaces\AMQPDispatchers\QueueDispatcher as QueueDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * This class provides API for queue management for end-users.
@@ -27,6 +28,13 @@ class Queue implements QueueInterface
      * @var BaseClient
      */
     protected $client;
+
+    /**
+     * Logger instance.
+     *
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * Current queue name.
@@ -67,10 +75,11 @@ class Queue implements QueueInterface
      * @param QueueDispatcherInterface $dispatcher
      * @param BaseClient $client
      */
-    public function __construct(QueueDispatcherInterface $dispatcher, BaseClient $client)
+    public function __construct(QueueDispatcherInterface $dispatcher, BaseClient $client, LoggerInterface $logger)
     {
         $this->queueDispatcher = $dispatcher;
         $this->client = $client;
+        $this->logger = $logger;
     }
 
     /**

@@ -10,7 +10,6 @@ use MonsterMQ\Connections\BinaryTransmitter;
 use MonsterMQ\Connections\Stream;
 use MonsterMQ\Core\Channel;
 use MonsterMQ\Core\Exchange;
-use MonsterMQ\Core\ExchangeDeclarator;
 use MonsterMQ\Core\Qos;
 use MonsterMQ\Core\Session;
 use MonsterMQ\Core\Queue;
@@ -22,6 +21,8 @@ use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
 use MonsterMQ\Interfaces\Core\Qos as QosInterface;
 use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
+use MonsterMQ\Support\Logger;
 
 abstract class BaseClient
 {
@@ -51,6 +52,8 @@ abstract class BaseClient
      */
     protected $qos;
 
+    protected $logger;
+
     protected $basicDispatcher;
 
     protected $currentChannelNumber = 0;
@@ -63,7 +66,8 @@ abstract class BaseClient
         ExchangeInterface $exchange = null,
         QueueInterface $queue = null,
         QosInterface $qos = null,
-        BasicDispatcher $basicDispatcher = null
+        BasicDispatcher $basicDispatcher = null,
+        LoggerInterface $logger = null
     ) {
         $this->setSocket($socket);
 
@@ -80,6 +84,8 @@ abstract class BaseClient
         $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter, $this);
 
         $this->setQos($qos);
+
+        $this->setLogger($logger);
     }
 
     public function __destruct()
@@ -108,7 +114,7 @@ abstract class BaseClient
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
-            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this));
+            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this), $this->logger);
         } else {
             $this->session = $session;
         }
@@ -117,7 +123,7 @@ abstract class BaseClient
     protected function setChannel(ChannelInterface $channel = null)
     {
         if (is_null($channel)) {
-            $this->channel = new Channel(new ChannelDispatcher($this->transmitter, $this), $this->session);
+            $this->channel = new Channel(new ChannelDispatcher($this->transmitter, $this), $this->session, $this->logger);
         }else{
             $this->channel = $channel;
         }
@@ -128,7 +134,7 @@ abstract class BaseClient
         if (!is_null($exchange)) {
             $this->exchange = $exchange;
         } else {
-            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter, $this), $this);
+            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter, $this), $this, $this->logger);
         }
     }
 
@@ -137,7 +143,7 @@ abstract class BaseClient
         if (!is_null($queue)) {
             $this->queue = $queue;
         } else {
-            $this->queue = new Queue(new QueueDispatcher($this->transmitter, $this), $this);
+            $this->queue = new Queue(new QueueDispatcher($this->transmitter, $this), $this, $this->logger);
         }
     }
 
@@ -146,13 +152,26 @@ abstract class BaseClient
         if (!is_null($qos)) {
             $this->qos = $qos;
         } else {
-            $this->qos = new Qos($this->basicDispatcher, $this);
+            $this->qos = new Qos($this->basicDispatcher, $this, $this->logger);
+        }
+    }
+
+    protected function setLogger(LoggerInterface $logger = null)
+    {
+        if (!is_null($logger)) {
+            $this->logger = $logger;
+        } else {
+            $this->logger = new Logger();
         }
     }
 
     public function connect(string $address = '127.0.0.1', int $port = 5672, int $connectionTimeout = null)
     {
+        $this->logger()->write("Connecting to {$address} on port {$port}");
+
         $this->socket->connect($address, $port, $connectionTimeout);
+
+        $this->logger()->write('Connection established');
     }
 
     public function logIn(string $username = 'guest', string $password = 'guest')
@@ -162,6 +181,8 @@ abstract class BaseClient
         }
 
         $this->session->logIn($username, $password);
+
+        $this->logger()->write('Session established');
 
         $this->changeChannel();
     }
@@ -179,8 +200,14 @@ abstract class BaseClient
 
         $channel = $this->channel->open($channel);
         $this->currentChannelNumber = $channel;
+        $this->logger()->write('Channel changed to '.$channel);
         return $channel;
+    }
 
+    public function closeChannel(int $channel)
+    {
+        $this->channel->close($channel);
+        $this->logger()->write("Channel {$channel} closed");
     }
 
     public function currentChannel()
@@ -286,5 +313,13 @@ abstract class BaseClient
     public function qos()
     {
         return $this->qos;
+    }
+
+    /**
+     * @return \MonsterMQ\Interfaces\Support\Logger
+     */
+    protected function logger()
+    {
+        return $this->logger;
     }
 }

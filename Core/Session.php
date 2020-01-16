@@ -9,6 +9,7 @@ use MonsterMQ\Exceptions\PackerException;
 use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Interfaces\AMQPDispatchers\ConnectionDispatcher as ConnectionDispatcherInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * This class responsible for session processing.
@@ -23,6 +24,13 @@ class Session implements SessionInterface
      * @var ConnectionDispatcherInterface
      */
     protected $connectionDispatcher;
+
+    /**
+     * Logger instance.
+     *
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * Virtual host to be opened.
@@ -67,9 +75,10 @@ class Session implements SessionInterface
      *
      * @param ConnectionDispatcherInterface $dispatcher
      */
-    public function __construct(ConnectionDispatcherInterface $dispatcher)
+    public function __construct(ConnectionDispatcherInterface $dispatcher, LoggerInterface $logger)
     {
         $this->connectionDispatcher = $dispatcher;
+        $this->logger = $logger;
     }
 
     /**
@@ -119,8 +128,10 @@ class Session implements SessionInterface
 
         if (in_array('AMQPLAIN',$securityMechanisms)) {
             $this->connectionDispatcher->authStrategy = new AMQPLAINStrategy();
+            return "AMQPLAIN";
         } elseif (in_array('PLAIN', $securityMechanisms)) {
             $this->connectionDispatcher->authStrategy = new PLAINStrategy();
+            return "PLAIN";
         } else {
             throw new ProtocolException(
                 'No supported authentication method. MonsterMQ supports only
@@ -142,7 +153,7 @@ class Session implements SessionInterface
     {
         $properties = $this->connectionDispatcher->receiveStart();
 
-        $this->selectAuthStrategy($properties['mechanisms']);
+        $mechanism = $this->selectAuthStrategy($properties['mechanisms']);
 		
 		$locales = explode(' ', $properties['locales']);
 		if (in_array($this->locale, $locales)) {
@@ -150,6 +161,12 @@ class Session implements SessionInterface
 		}else{
 			$locale = 'en_US';
 		}
+
+		$this->logger->write(
+		    "Starting session with {$mechanism} auth mechanism and 
+		    {$locale} locale"
+        );
+
         $this->connectionDispatcher->sendStartOk($username, $password, $locale);
     }
 
@@ -164,6 +181,11 @@ class Session implements SessionInterface
         $this->frameMaxSize = $properties['frameMaxSize'];
         $this->heartbeatInterval = $properties['heartbeat'];
 
+        $this->logger->write(
+            "Starting to tune session with {$this->channelMaxNumber} channel max number, 
+            {$this->frameMaxSize} frame max size and {$this->heartbeatInterval} heartbeat interval."
+        );
+
         $this->connectionDispatcher->sendTuneOk(
             $properties['channelMaxNumber'],
             $properties['frameMaxSize'],
@@ -176,6 +198,7 @@ class Session implements SessionInterface
      */
     protected function openVirtualHost()
     {
+        $this->logger->write("Opening '{$this->virtualHost}' virtual host");
         $this->connectionDispatcher->sendOpen($this->virtualHost);
         $this->connectionDispatcher->receiveOpenOk();
     }
