@@ -39,6 +39,8 @@ class Consumer extends BaseClient
      */
     public function consume($queue)
     {
+        $this->logger->write("Starting consuming queue '{$queue}'");
+
         $this->basicDispatcher->sendConsume($this->currentChannel(), $queue, '', false, $this->noAck, false, false, []);
         $this->consumerTags[$this->currentChannel()][] = $this->basicDispatcher->receiveConsumeOk();
         return end($this->consumerTags[$this->currentChannel()]);
@@ -56,10 +58,15 @@ class Consumer extends BaseClient
     public function stopConsume($consumerTag = null)
     {
         if (!is_null($consumerTag)) {
+            $this->logger->write("Stop consumer with consumer tag '{$consumerTag}'");
+
             $this->basicDispatcher->sendCancel($this->currentChannel(), $consumerTag, false);
             $this->basicDispatcher->receiveCancelOk();
         } else {
             foreach ($this->consumerTags[$this->currentChannel()] as $tag) {
+                $channel = $this->currentChannel();
+                $this->logger->write("Stop all consumers on channel {$channel}");
+
                 $this->basicDispatcher->sendCancel($this->currentChannel(), $tag, false);
                 $this->basicDispatcher->receiveCancelOk();
             }
@@ -77,6 +84,8 @@ class Consumer extends BaseClient
      */
     public function wait(\Closure $handler)
     {
+        $this->logger->write("Starting consuming loop");
+
         while ($arguments = $this->basicDispatcher->receiveMessage()) {
             call_user_func_array($handler, $arguments);
         }
@@ -124,6 +133,8 @@ class Consumer extends BaseClient
      */
     public function noAck()
     {
+        $this->logger->write("Acknowledges disabled");
+
         $this->noAck = true;
         return $this;
     }
@@ -133,6 +144,8 @@ class Consumer extends BaseClient
      */
     public function rejectLast($requeue = false)
     {
+        $this->logger->write("Rejecting last incoming message");
+
         $this->basicDispatcher->sendNack($this->currentChannel(), null, false, $requeue);
     }
 
@@ -141,6 +154,8 @@ class Consumer extends BaseClient
      */
     public function rejectAll($requeue = false)
     {
+        $this->logger->write("Rejecting all currently outstanding messages");
+
         $this->basicDispatcher->sendNack($this->currentChannel(), 0, true, $requeue);
     }
 
@@ -159,6 +174,9 @@ class Consumer extends BaseClient
      */
     public function redeliver($requeue = false)
     {
+        $requeueMessage = $requeue ? "true" : "false";
+        $this->logger->write("Asking for messages redelivery with requeue option set to '{$requeueMessage}'");
+
         $this->basicDispatcher->sendRecover($this->currentChannel(), $requeue);
         $this->basicDispatcher->receiveRecoverOk();
     }

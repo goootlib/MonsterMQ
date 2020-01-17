@@ -2,13 +2,15 @@
 
 namespace MonsterMQ\Support;
 
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
+
 /**
  * This class used by client in order to log or output description of execution
  * process being ran.
  *
  * @author Gleb Zhukov <goootlib@gmail.com>
  */
-class Logger
+class Logger implements LoggerInterface
 {
     /**
      * Resource used by writing functions.
@@ -29,11 +31,17 @@ class Logger
         } else {
             $currentYear = (new \DateTime())->format('Y');
             $currentMonth= (new \DateTime())->format('F');
-            $logFilePath = dirname(__DIR__)
+
+            $logDirPath = dirname(__DIR__)
                 .DIRECTORY_SEPARATOR.'Log'
-                .DIRECTORY_SEPARATOR.$currentYear
-                .DIRECTORY_SEPARATOR.$currentMonth;
-            $this->resource = @fopen($logFilePath, 'a');
+                .DIRECTORY_SEPARATOR.$currentYear;
+
+            $logFilePath = $logDirPath.DIRECTORY_SEPARATOR.$currentMonth;
+
+            if (!file_exists($logDirPath)) {
+                mkdir($logDirPath, 0777, true);
+            }
+            $this->resource = fopen($logFilePath, 'a');
         }
     }
 
@@ -50,7 +58,7 @@ class Logger
 
     protected function prepareMessage(string $message)
     {
-        $date = (new \DateTime())->format('Y-m-d H:i:s');
+        $date = (new \DateTime())->format('Y-m-d H:i:s:v');
         $message = "[{$date}] ".$message."\n";
         return $message;
     }

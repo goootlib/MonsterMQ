@@ -90,10 +90,7 @@ class Exchange implements ExchangeInterface
         $channel = $this->client->currentChannel();
         $durable = $this->durable ? 'durable' : "";
         $autodelete = $this->autodelete ? "autodelete" : "";
-        $this->logger->write(
-            "Declaring {$durable} {$autodelete} exchange on channel {$channel} with name '{$this->currentExchangeName}'
-            and type '{$this->type}'"
-        );
+        $this->logger->write("Declaring {$durable} {$autodelete} {$this->type} exchange on channel {$channel} with name '{$this->currentExchangeName}'");
 
         $this->exchangeDispatcher->sendDeclare(
             $this->client->currentChannel(),
@@ -128,7 +125,7 @@ class Exchange implements ExchangeInterface
     public function delete()
     {
         $channel = $this->client->currentChannel();
-        $this->logger->write("Deleting exchange with name {$this->currentExchangeName} on channel {$channel}");
+        $this->logger->write("Deleting exchange with name '{$this->currentExchangeName}' on channel {$channel}");
 
         $this->exchangeDispatcher->sendDelete(
             $this->client->currentChannel(),
@@ -149,10 +146,7 @@ class Exchange implements ExchangeInterface
     public function bind(string $to, string $routingKey)
     {
         $channel = $this->client->currentChannel();
-        $this->logger->write(
-            "Binding exchange '{$this->currentExchangeName}' to exchange '{$to}'
-             with routing key '{$routingKey}' on channel {$channel}"
-        );
+        $this->logger->write("Binding exchange '{$this->currentExchangeName}' to exchange '{$to}' with routing key '{$routingKey}' on channel {$channel}");
 
         $this->exchangeDispatcher->sendBind(
             $this->client->currentChannel(),
@@ -176,10 +170,7 @@ class Exchange implements ExchangeInterface
     public function unbind(string $from, string $routingKey)
     {
         $channel = $this->client->currentChannel();
-        $this->logger->write(
-            "Unbinding exchange {$this->currentExchangeName} from exchange {$from} 
-            with routing key {$routingKey} on channel {$channel}"
-        );
+        $this->logger->write("Unbinding exchange '{$this->currentExchangeName}' from exchange '{$from}' with routing key '{$routingKey}' on channel {$channel}");
 
         $this->exchangeDispatcher->sendUnbind(
             $this->client->currentChannel(),

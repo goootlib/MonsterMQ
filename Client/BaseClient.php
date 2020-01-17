@@ -69,6 +69,8 @@ abstract class BaseClient
         BasicDispatcher $basicDispatcher = null,
         LoggerInterface $logger = null
     ) {
+        $this->setLogger($logger);
+		
         $this->setSocket($socket);
 
         $this->setTransmitter($transmitter);
@@ -84,8 +86,6 @@ abstract class BaseClient
         $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter, $this);
 
         $this->setQos($qos);
-
-        $this->setLogger($logger);
     }
 
     public function __destruct()
@@ -96,7 +96,7 @@ abstract class BaseClient
     protected function setSocket(StreamInterface $socket = null)
     {
         if (is_null($socket)) {
-            $this->socket = new Stream();
+            $this->socket = new Stream($this->logger);
         } else {
             $this->socket = $socket;
         }
@@ -167,11 +167,7 @@ abstract class BaseClient
 
     public function connect(string $address = '127.0.0.1', int $port = 5672, int $connectionTimeout = null)
     {
-        $this->logger()->write("Connecting to {$address} on port {$port}");
-
         $this->socket->connect($address, $port, $connectionTimeout);
-
-        $this->logger()->write('Connection established');
     }
 
     public function logIn(string $username = 'guest', string $password = 'guest')

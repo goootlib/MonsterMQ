@@ -116,10 +116,7 @@ class Qos implements QosInterface
     {
         $channel = $this->client->currentChannel();
         $global = $this->global ? "per channel" : "per consumer";
-        $this->logger->write(
-            "Appling quality of service prefetch count {$this->prefetchCount} {$global} 
-            on channel {$channel}"
-        );
+        $this->logger->write("Appling quality of service prefetch count {$this->prefetchCount} {$global} on channel {$channel}");
 
         $this->basicDispatcher->sendQos(
             $this->client->currentChannel(),

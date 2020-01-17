@@ -92,6 +92,12 @@ class Queue implements QueueInterface
      */
     public function declare()
     {
+        $durable = $this->durable ? "durable" : '';
+        $exclusive = $this->exclusive ? 'exclusive' : '';
+        $autodelete = $this->autodelete ? "autodelete" : '';
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Declaring {$exclusive} {$durable} {$autodelete} queue with name '{$this->currentQueueName}' on channel {$channel}");
+
         $this->queueDispatcher->sendDeclare(
             $this->client->currentChannel(),
             $this->currentQueueName,
@@ -119,6 +125,9 @@ class Queue implements QueueInterface
      */
     public function bind(string $exchangeName, string $routingKey)
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Binding queue '{$this->currentQueueName}' to exchange '{$exchangeName}' with routing key '{$routingKey}' on channel {$channel}");
+
         $this->queueDispatcher->sendBind(
             $this->client->currentChannel(),
             $this->currentQueueName,
@@ -140,6 +149,9 @@ class Queue implements QueueInterface
      */
     public function unbind(string $exchangeName, string $routingKey)
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Unbinding queue with name '{$this->currentQueueName}' from exchange with name '{$exchangeName}' and routing key '{$routingKey}' on channel {$channel}");
+
         $this->queueDispatcher->sendUnbind(
             $this->client->currentChannel(),
             $this->currentQueueName,
@@ -160,6 +172,9 @@ class Queue implements QueueInterface
      */
     public function purge()
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Purging queue with name '{$this->currentQueueName}' on channel {$channel}");
+
         $this->queueDispatcher->sendPurge(
             $this->client->currentChannel(),
             $this->currentQueueName
@@ -180,6 +195,9 @@ class Queue implements QueueInterface
      */
     public function delete()
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Deleting queue '{$this->currentQueueName}' on channel {$channel}");
+
         $this->queueDispatcher->sendDelete(
             $this->client->currentChannel(),
             $this->currentQueueName
@@ -200,6 +218,9 @@ class Queue implements QueueInterface
      */
     public function deleteIfUnused()
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Deleting unused (no consumers) queue with name '{$this->currentQueueName}' on channel {$channel}");
+
         $this->queueDispatcher->sendDelete(
             $this->client->currentChannel(),
             $this->currentQueueName,
@@ -221,6 +242,9 @@ class Queue implements QueueInterface
      */
     public function deleteIfEmpty()
     {
+        $channel = $this->client->currentChannel();
+        $this->logger->write("Deleting empty queue with name '{$this->currentQueueName}' on channel {$channel}");
+
         $this->queueDispatcher->sendDelete(
             $this->client->currentChannel(),
             $this->currentQueueName,

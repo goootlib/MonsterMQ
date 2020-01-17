@@ -109,6 +109,7 @@ class Session implements SessionInterface
      */
     public function logOut()
     {
+        $this->logger->write("Closing session");
         $this->connectionDispatcher->sendClose();
         $this->connectionDispatcher->receiveCloseOK();
     }
@@ -162,10 +163,7 @@ class Session implements SessionInterface
 			$locale = 'en_US';
 		}
 
-		$this->logger->write(
-		    "Starting session with {$mechanism} auth mechanism and 
-		    {$locale} locale"
-        );
+		$this->logger->write("Starting session with '{$mechanism}' auth mechanism and '{$locale}' locale");
 
         $this->connectionDispatcher->sendStartOk($username, $password, $locale);
     }
@@ -181,10 +179,7 @@ class Session implements SessionInterface
         $this->frameMaxSize = $properties['frameMaxSize'];
         $this->heartbeatInterval = $properties['heartbeat'];
 
-        $this->logger->write(
-            "Starting to tune session with {$this->channelMaxNumber} channel max number, 
-            {$this->frameMaxSize} frame max size and {$this->heartbeatInterval} heartbeat interval."
-        );
+        $this->logger->write("Starting to tune session with channel max number {$this->channelMaxNumber}, frame max size {$this->frameMaxSize}  and heartbeat interval {$this->heartbeatInterval}.");
 
         $this->connectionDispatcher->sendTuneOk(
             $properties['channelMaxNumber'],

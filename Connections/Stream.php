@@ -4,6 +4,7 @@ namespace MonsterMQ\Connections;
 
 use MonsterMQ\Exceptions\NetworkException;
 use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
+use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 
 /**
  * Class Stream based on capabilities
@@ -20,6 +21,13 @@ class Stream implements StreamInterface
      * and plaintext connections, the writing will not exceed 8192 bytes at a time.
      */
     const WRITE_BUFFER_SIZE = 8192;
+
+    /**
+     * Logger instance.
+     *
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
      * Created stream context.
@@ -86,11 +94,18 @@ class Stream implements StreamInterface
     protected $contextAvailable = false;
 
     /**
-     * Close connection on object deleting.
+     * Stream constructor.
+     *
+     * @param LoggerInterface $logger
      */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     public function __destruct()
     {
-        $this->close();
+        $this->logger->write("\n\n");
     }
 
     /**
@@ -203,11 +218,18 @@ class Stream implements StreamInterface
      */
     protected function refreshContext()
     {
-        $socketContextOptions = ['bindto' => "{$this->bindAdress}:{$this->bindPort}"];
+        $socketContextOptions = ['bindto' => "{$this->bindAddress}:{$this->bindPort}"];
 
         if ($this->tcpNodelay) {
             $socketContextOptions = array_merge($socketContextOptions, ['tcp_nodelay' => true]);
         }
+
+        $address = $this->bindAddress ? "to address {$this->bindAddress} and " : "";
+        $port = $this->bindPort ? "to port {$this->bindPort}" : "";
+        if (!empty($address.$port)) {
+            $this->logger->write("Binding socket ".$address.$port);
+        }
+
         $this->context = stream_context_create([
             'socket' => $socketContextOptions
         ]);
@@ -224,6 +246,8 @@ class Stream implements StreamInterface
     {
         $seconds = $this->timeout[0];
         $microseconds = $this->timeout[1];
+
+        $this->logger->write("Applying socket writing/reading timeout to {$seconds} seconds and {$microseconds} microseconds");
 
         return stream_set_timeout($this->streamResource, $seconds, $microseconds);
     }
@@ -252,6 +276,9 @@ class Stream implements StreamInterface
     protected function applyKeepalive()
     {
         if ($this->keepaliveEnabled && $this->keepaliveAvailable()) {
+
+            $this->logger->write('Enabling keepalive');
+
             $socket = socket_import_stream($this->streamResource);
             socket_set_option($socket, SOL_SOCKET, SO_KEEPALIVE, 1);
         }
@@ -275,6 +302,8 @@ class Stream implements StreamInterface
         if (!$this->contextAvailable) {
             $this->refreshContext();
         }
+
+        $this->logger->write("Connecting to {$address} on port {$AMQPport} by protocol {$this->protocol}");
 
         $this->streamResource = stream_socket_client(
             "{$this->protocol}://{$address}:{$AMQPport}",
@@ -390,6 +419,8 @@ class Stream implements StreamInterface
     public function close()
     {
         if (isset($this->streamResource)) {
+            $this->logger->write("Closing socket connection");
+
             stream_socket_shutdown($this->streamResource, STREAM_SHUT_RDWR);
         }
     }
