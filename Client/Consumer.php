@@ -37,11 +37,12 @@ class Consumer extends BaseClient
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function consume($queue)
+    public function consume($queue, $noAck = false)
     {
-        $this->logger->write("Starting consuming queue '{$queue}'");
+        $noAckMessage = $noAck ? "without acknowledgements" : "with acknowledgements";
+        $this->logger->write("Start to consume queue '{$queue}' {$noAckMessage}");
 
-        $this->basicDispatcher->sendConsume($this->currentChannel(), $queue, '', false, $this->noAck, false, false, []);
+        $this->basicDispatcher->sendConsume($this->currentChannel(), $queue, '', false, $noAck, false, false, []);
         $this->consumerTags[$this->currentChannel()][] = $this->basicDispatcher->receiveConsumeOk();
         return end($this->consumerTags[$this->currentChannel()]);
     }
@@ -58,7 +59,8 @@ class Consumer extends BaseClient
     public function stopConsume($consumerTag = null)
     {
         if (!is_null($consumerTag)) {
-            $this->logger->write("Stop consumer with consumer tag '{$consumerTag}'");
+            $channel = $this->currentChannel();
+            $this->logger->write("Stop consumer with consumer tag '{$consumerTag}' on channel {$channel}");
 
             $this->basicDispatcher->sendCancel($this->currentChannel(), $consumerTag, false);
             $this->basicDispatcher->receiveCancelOk();
@@ -124,19 +126,6 @@ class Consumer extends BaseClient
     public function ackAll()
     {
         $this->basicDispatcher->sendAck($this->currentChannel(), 0, true);
-    }
-
-    /**
-     * Disables acknowledgements for incoming messages.
-     *
-     * @return $this
-     */
-    public function noAck()
-    {
-        $this->logger->write("Acknowledges disabled");
-
-        $this->noAck = true;
-        return $this;
     }
 
     /**

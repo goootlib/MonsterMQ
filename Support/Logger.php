@@ -39,25 +39,40 @@ class Logger implements LoggerInterface
             $logFilePath = $logDirPath.DIRECTORY_SEPARATOR.$currentMonth;
 
             if (!file_exists($logDirPath)) {
-                mkdir($logDirPath, 0777, true);
+                @mkdir($logDirPath, 0777, true);
             }
-            $this->resource = fopen($logFilePath, 'a');
+            $this->resource = @fopen($logFilePath, 'a');
         }
     }
 
     /**
      * Writes process description message to log file or outputs to cli.
      *
-     * @param string $message Message to write.
+     * @param string $message  Message to write.
+     * @param bool   $noFormat Whether to add date and new line transition to
+     *                         message.
+     *
+     * @throws \Exception
      */
-    public function write(string $message)
+    public function write(string $message, $noFormat = false)
     {
-        $message = $this->prepareMessage($message);
-        fwrite($this->resource, $message);
+        $message = $this->prepareMessage($message, $noFormat);
+        @fwrite($this->resource, $message);
     }
 
-    protected function prepareMessage(string $message)
+    /**
+     * @param string $message  Message to prepare.
+     * @param bool   $noFormat Whether to add date and new line transition to
+     *                         message.
+     * @return string          Prepared message.
+     *
+     * @throws \Exception
+     */
+    protected function prepareMessage(string $message, $noFormat = false)
     {
+        if ($noFormat) {
+            return $message;
+        }
         $date = (new \DateTime())->format('Y-m-d H:i:s:v');
         $message = "[{$date}] ".$message."\n";
         return $message;

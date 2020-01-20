@@ -103,11 +103,6 @@ class Stream implements StreamInterface
         $this->logger = $logger;
     }
 
-    public function __destruct()
-    {
-        $this->logger->write("\n\n");
-    }
-
     /**
      * Sets reading/writing timeout after which reading from or writing to
      * socket fails.

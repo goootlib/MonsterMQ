@@ -78,4 +78,13 @@ interface AMQP
     public const BASIC_RECOVER = 110;
     public const BASIC_RECOVER_OK = 111;
     public const BASIC_NACK = 120;
+
+    public const TX_CLASS_ID = 90;
+
+    public const TX_SELECT = 10;
+    public const TX_SELECT_OK = 11;
+    public const TX_COMMIT = 20;
+    public const TX_COMMIT_OK = 21;
+    public const TX_ROLLBACK = 30;
+    public const TX_ROLLBACK_OK = 31;
 }

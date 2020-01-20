@@ -90,7 +90,8 @@ abstract class BaseClient
 
     public function __destruct()
     {
-
+        //Separation of log message blocks in log file
+        $this->logger->write("\n\n", true);
     }
 
     protected function setSocket(StreamInterface $socket = null)
