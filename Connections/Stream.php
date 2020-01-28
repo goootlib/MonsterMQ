@@ -37,6 +37,83 @@ class Stream implements StreamInterface
     protected $context;
 
     /**
+     * Whether to allow self-signed certificates.
+     *
+     * @var bool
+     */
+    protected $allowSelfSigned = false;
+
+    /**
+     * Require verification of SSL certificate used.
+     *
+     * @var bool
+     */
+    protected $verifyPeer = false;
+
+    /**
+     * If true - require verification of peer name.
+     *
+     * @var bool
+     */
+    protected $verifyPeerName = false;
+	
+	/**
+     * Peer name to be used for peer name verification. If this value is not
+     * set, then the name is guessed based on the hostname used when opening
+     * the stream.
+     *
+     * @var string
+     */
+	protected $peerName;
+
+    /**
+     * Location of Certificate Authority file on local filesystem which should
+     * be used with the verifyPeer context option to authenticate the identity
+     * of the remote peer.
+     *
+     * @var string
+     */
+    protected $CA;
+
+    /**
+     * Path to local certificate file on filesystem. It must be a PEM encoded
+     * file which contains your certificate and private key.  The private key
+     * also may be contained in a separate file specified by Stream::privateKey().
+     *
+     * @var string
+     */
+    protected $certificate;
+
+    /**
+     * Path to local private key file on filesystem in case of separate files
+     * for certificate and private key.
+     *
+     * @var string
+     */
+    protected $privateKey;
+
+    /**
+     * Passphrase with which your certificate file was encoded.
+     *
+     * @var string
+     */
+    protected $password;
+
+    /**
+     * Enables abortion if the certificate chain is too deep. Defaults to no verification.
+     *
+     * @var int
+     */
+    protected $verifyDepth;
+
+    /**
+     * Comma separated list of available ciphers.
+     *
+     * @var string
+     */
+    protected $ciphers;
+
+    /**
      * Opened stream resource.
      *
      * @var resource
@@ -104,41 +181,152 @@ class Stream implements StreamInterface
     }
 
     /**
-     * Sets reading/writing timeout after which reading from or writing to
-     * socket fails.
+     * Enables usage of tls protocol.
      *
-     * @param int|float $seconds      In case of int type of the first argument,
-     *                                the second argument also must be set. In
-     *                                case of float type of first argument
-     *                                fractional part of float number will be
-     *                                treated as microseconds and will be used
-     *                                instead of second argument.
-     * @param int       $microseconds Defines microseconds part of reading
-     *                                timeout.
-     *
-     * @return $this For chaining purposes.
+     * @return $this
      */
-    public function setTimeout($seconds, int $microseconds = 0)
+    public function useTLS()
     {
-        if (!is_int($seconds) && !is_float($seconds)) {
-            throw new \InvalidArgumentException(
-                'Error while setting reading/writing timeout. Provided 
-                "seconds" argument is not an integer or a float.'
-            );
-        } elseif (is_int($seconds) && !is_int($microseconds)) {
-            throw new \InvalidArgumentException(
-                "Error while setting reading/writing timeout. If first argument 
-                is integer(which represents seconds), second argument (which represents 
-                microseconds) must be integer too."
-            );
-        }
+        $this->protocol = 'tls';
 
-        if (is_float($seconds)) {
-            //Fractional part of float multiplied by number of microseconds in one second.
-            $microseconds = fmod($seconds,1) * 1000000;
-            $seconds = floor($seconds);
-        }
-        $this->timeout = [$seconds, $microseconds];
+        return $this;
+    }
+
+    /**
+     * Allow self-signed TLS certificates.
+     *
+     * @return $this
+     */
+    public function allowSelfSigned()
+    {
+        $this->allowSelfSigned = true;
+
+        return $this;
+    }
+
+    /**
+     * Enables verification of SSL certificate used.
+     *
+     * @return $this
+     */
+    public function verifyPeer()
+    {
+        $this->verifyPeer = true;
+
+        return $this;
+    }
+
+    /**
+     * Enables verification of peer name.
+     *
+     * @return $this
+     */
+    public function verifyPeerName()
+    {
+        $this->verifyPeerName = true;
+
+        return $this;
+    }
+	
+	/**
+	 * Sets peer name to be used for peer name verification.
+	 *
+	 * @param string $name Peer name.
+	 *
+	 * @return $this
+	 */
+	public function peerName(string $name)
+	{
+		$this->peerName = $name;
+		
+		return $this;
+	}
+
+    /**
+     * Location of Certificate Authority file on local filesystem which should
+     * be used with the Stream::verifyPeer() to authenticate the identity
+     * of the remote peer.
+     *
+     * @param string $certificateAuthorityFile CA file path.
+     *
+     * @return $this
+     */
+    public function CA(string $certificateAuthorityFile)
+    {
+        $this->CA = $certificateAuthorityFile;
+
+        return $this;
+    }
+
+    /**
+     * Sets path to local certificate file on filesystem. It must be a PEM encoded
+     * file which contains your certificate and private key. The private key
+     * also may be contained in a separate file specified by Stream::privateKey().
+     *
+     * @param string $certificateFile Path to certificate file.
+     *
+     * @return $this
+     */
+    public function certificate(string $certificateFile)
+    {
+        $this->certificate = $certificateFile;
+
+        return $this;
+    }
+
+    /**
+     * Sets path to local private key file on filesystem in case of separate files
+     * for certificate and private key.
+     *
+     * @param string $privateKeyFile Path to private key file.
+     *
+     * @return $this
+     */
+    public function privateKey(string $privateKeyFile)
+    {
+        $this->privateKey = $privateKeyFile;
+
+        return $this;
+    }
+
+    /**
+     * Sets passphrase with which your certificate file was encoded.
+     *
+     * @param string $password
+     *
+     * @return $this
+     */
+    public function password(string $password)
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * Enables connection abortion if the certificate chain is too deep.
+     *
+     * @param int $depth Depth of certificate chain.
+     *
+     * @return $this
+     */
+    public function verifyDepth(int $depth)
+    {
+        $this->verifyDepth = $depth;
+
+        return $this;
+    }
+
+    /**
+     * Sets comma-separated list of ciphers.
+     *
+     * @param string $ciphers Comma-separated list of ciphers.
+     *
+     * @return $this
+     */
+    public function ciphers(string $ciphers)
+    {
+        $this->ciphers = $ciphers;
 
         return $this;
     }
@@ -209,27 +397,129 @@ class Stream implements StreamInterface
     }
 
     /**
+     * Sets reading/writing timeout after which reading from or writing to
+     * socket fails.
+     *
+     * @param int|float $seconds      In case of int type of the first argument,
+     *                                the second argument also must be set. In
+     *                                case of float type of first argument
+     *                                fractional part of float number will be
+     *                                treated as microseconds and will be used
+     *                                instead of second argument.
+     * @param int       $microseconds Defines microseconds part of reading
+     *                                timeout.
+     *
+     * @return $this For chaining purposes.
+     */
+    public function setTimeout($seconds, int $microseconds = 0)
+    {
+        if (!is_int($seconds) && !is_float($seconds)) {
+            throw new \InvalidArgumentException(
+                'Error while setting reading/writing timeout. Provided 
+                "seconds" argument is not an integer or a float.'
+            );
+        } elseif (is_int($seconds) && !is_int($microseconds)) {
+            throw new \InvalidArgumentException(
+                "Error while setting reading/writing timeout. If first argument 
+                is integer(which represents seconds), second argument (which represents 
+                microseconds) must be integer too."
+            );
+        }
+
+        if (is_float($seconds)) {
+            //Fractional part of float multiplied by number of microseconds in one second.
+            $microseconds = fmod($seconds,1) * 1000000;
+            $seconds = floor($seconds);
+        }
+        $this->timeout = [$seconds, $microseconds];
+
+        return $this;
+    }
+
+    /**
      * Recreates context resource.
      */
     protected function refreshContext()
     {
-        $socketContextOptions = ['bindto' => "{$this->bindAddress}:{$this->bindPort}"];
+        if ($this->protocol == 'tcp') {
+            $socketContextOptions = ['bindto' => "{$this->bindAddress}:{$this->bindPort}"];
 
-        if ($this->tcpNodelay) {
-            $socketContextOptions = array_merge($socketContextOptions, ['tcp_nodelay' => true]);
+            if ($this->tcpNodelay) {
+                $socketContextOptions = array_merge($socketContextOptions, ['tcp_nodelay' => true]);
+            }
+
+            $address = $this->bindAddress ? "to address {$this->bindAddress} and " : "";
+            $port = $this->bindPort ? "to port {$this->bindPort}" : "";
+            if (!empty($address . $port)) {
+                $this->logger->write("Binding socket " . $address . $port);
+            }
+
+            $this->context = stream_context_create([
+                'socket' => $socketContextOptions
+            ]);
+        } else {
+            $contextOptions = $this->getTLSContextOptions();
+
+            if ($contextOptions['allow_self_signed']) {
+                $message = 'with self-signed certificates allowed';
+            } else {
+                $message = $contextOptions['verify_peer'] ? 'peer verification' : '';
+                $message .= $contextOptions['verify_peer_name'] ? 'and peer name verification' : '';
+                $message = !empty($message) ? 'with '.$message.' enabled' : '';
+            }
+
+            $this->logger->write('Setting up TLS connection context '.$message);
+
+            $this->context = stream_context_create([
+                'tls' => $contextOptions
+            ]);
         }
-
-        $address = $this->bindAddress ? "to address {$this->bindAddress} and " : "";
-        $port = $this->bindPort ? "to port {$this->bindPort}" : "";
-        if (!empty($address.$port)) {
-            $this->logger->write("Binding socket ".$address.$port);
-        }
-
-        $this->context = stream_context_create([
-            'socket' => $socketContextOptions
-        ]);
 
         $this->contextAvailable = true;
+    }
+
+    /**
+     * Returns TLS context options which would be used for TLS context creation.
+     *
+     * @return array TLS context options.
+     */
+    protected function getTLSContextOptions()
+    {
+        $TLSContextOptions = [
+            'verify_peer' => $this->verifyPeer,
+            'verify_peer_name' => $this->verifyPeerName,
+            'allow_self_signed' => $this->allowSelfSigned
+        ];
+
+        if (isset($this->peerName)) {
+            $TLSContextOptions['peer_name'] = $this->peerName;
+        }
+
+        if (isset($this->CA)) {
+            $TLSContextOptions['cafile'] = $this->CA;
+        }
+
+        if (isset($this->certificate)) {
+            $TLSContextOptions['local_cert'] = $this->certificate;
+        }
+
+        if (isset($this->privateKey)) {
+            $TLSContextOptions['local_pk'] = $this->privateKey;
+        }
+
+        if (isset($this->password)) {
+            $TLSContextOptions['passphrase'] = $this->password;
+        }
+
+        if (isset($this->verifyDepth)) {
+            $TLSContextOptions['verify_depth'] = $this->verifyDepth;
+        }
+
+        if (isset($this->ciphers)) {
+            $TLSContextOptions['ciphers'] = $this->ciphers;
+        }
+
+        return $TLSContextOptions;
     }
 
     /**
@@ -270,7 +560,7 @@ class Stream implements StreamInterface
      */
     protected function applyKeepalive()
     {
-        if ($this->keepaliveEnabled && $this->keepaliveAvailable()) {
+        if ($this->keepaliveEnabled && $this->protocol == 'tcp' && $this->keepaliveAvailable()) {
 
             $this->logger->write('Enabling keepalive');
 

@@ -9,7 +9,7 @@ use MonsterMQ\Exceptions\ProtocolException;
 use MonsterMQ\Exceptions\SessionException;
 use MonsterMQ\Interfaces\AMQPDispatchers\AMQP;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
-use MonsterMQ\Interfaces\Core\Session as SessionInterface;
+use MonsterMQ\Interfaces\Core\Events as EventsInterface;
 
 /**
  * This is a base class for AMQP dispatchers, it includes common logic needed
@@ -32,6 +32,13 @@ abstract class BaseDispatcher implements AMQP
      * @var BaseClient
      */
     protected $client;
+
+    /**
+     * Events instance.
+     *
+     * @var EventsInterface
+     */
+    protected $events;
 
     /**
      * Current frame size used by termination methods.
@@ -81,10 +88,11 @@ abstract class BaseDispatcher implements AMQP
      * @param BinaryTransmitterInterface $transmitter
      * @param BaseClient $client
      */
-    public function __construct(BinaryTransmitterInterface $transmitter, BaseClient $client)
+    public function __construct(BinaryTransmitterInterface $transmitter, BaseClient $client, EventsInterface $events)
     {
         $this->transmitter = $transmitter;
         $this->client = $client;
+        $this->events = $events;
     }
 
     /**
@@ -271,6 +279,10 @@ abstract class BaseDispatcher implements AMQP
 
         $this->sendChannelFlowOk($isActive);
 
+        if (!$isActive) {
+            $this->events->runSuspensionHandlers($this->currentChannel);
+        }
+
         if ($isActive) {
             self::$suspendedChannels = array_diff(self::$suspendedChannels, [$this->currentChannel]);
         } else {
@@ -291,6 +303,8 @@ abstract class BaseDispatcher implements AMQP
         $this->transmitter->receiveShort();
 
         $this->validateFrameDelimiter();
+
+        $this->events->runClosureHandlers($this->currentChannel);
 
         self::$closedChannels[] = $this->currentChannel;
 

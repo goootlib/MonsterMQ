@@ -5,6 +5,102 @@ namespace MonsterMQ\Interfaces\Connections;
 Interface Stream
 {
     /**
+     * Enables usage of tls protocol.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function useTLS();
+
+    /**
+     * Allow self-signed TLS certificates.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function allowSelfSigned();
+
+    /**
+     * Enables verification of SSL certificate used.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function verifyPeer();
+
+    /**
+     * Enables verification of peer name.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function verifyPeerName();
+
+    /**
+     * Sets peer name to be used for peer name verification.
+     *
+     * @param string $name Peer name.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function peerName(string $name);
+
+    /**
+     * Location of Certificate Authority file on local filesystem which should
+     * be used with the Stream::verifyPeer() to authenticate the identity
+     * of the remote peer.
+     *
+     * @param string $certificateAuthorityFile CA file path.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function CA(string $certificateAuthorityFile);
+
+    /**
+     * Sets path to local certificate file on filesystem. It must be a PEM encoded
+     * file which contains your certificate and private key. The private key
+     * also may be contained in a separate file specified by Stream::privateKey().
+     *
+     * @param string $certificateFile Path to certificate file.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function certificate(string $certificateFile);
+
+    /**
+     * Sets path to local private key file on filesystem in case of separate files
+     * for certificate and private key.
+     *
+     * @param string $privateKeyFile Path to private key file.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function privateKey(string $privateKeyFile);
+
+    /**
+     * Sets passphrase with which your certificate file was encoded.
+     *
+     * @param string $password
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function password(string $password);
+
+    /**
+     * Enables connection abortion if the certificate chain is too deep.
+     *
+     * @param int $depth Depth of certificate chain.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function verifyDepth(int $depth);
+
+    /**
+     * Sets comma-separated list of ciphers.
+     *
+     * @param string $ciphers Comma-separated list of ciphers.
+     *
+     * @return \MonsterMQ\Connections\Stream
+     */
+    public function ciphers(string $ciphers);
+
+    /**
      * Whether connected.
      *
      * @return bool Whether connected.

@@ -3,3 +3,5 @@
 /composer.json
 /composer.lock
 /Log
+/connect.php
+/consumer.php

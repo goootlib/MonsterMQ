@@ -6,8 +6,8 @@ $consumer = new \MonsterMQ\Client\Consumer();
 $consumer->logIn();
 $consumer->consume('queue-5');
 $consumer->wait(function ($message, $channel) use ($consumer){
-   echo $message;
-   echo $channel;
+   echo $message."\n";
+   echo $channel."\n";
    $consumer->ackLast();
 });
 

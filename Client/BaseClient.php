@@ -6,27 +6,36 @@ use MonsterMQ\AMQPDispatchers\ChannelDispatcher;
 use MonsterMQ\AMQPDispatchers\ConnectionDispatcher;
 use MonsterMQ\AMQPDispatchers\ExchangeDispatcher;
 use MonsterMQ\AMQPDispatchers\QueueDispatcher;
+use MonsterMQ\AMQPDispatchers\TransactionDispatcher;
 use MonsterMQ\Connections\BinaryTransmitter;
 use MonsterMQ\Connections\Stream;
 use MonsterMQ\Core\Channel;
+use MonsterMQ\Core\Events;
 use MonsterMQ\Core\Exchange;
 use MonsterMQ\Core\Qos;
 use MonsterMQ\Core\Session;
 use MonsterMQ\Core\Queue;
+use MonsterMQ\Core\Transaction;
 use MonsterMQ\Interfaces\AMQPDispatchers\BasicDispatcher;
 use MonsterMQ\Interfaces\Connections\BinaryTransmitter as BinaryTransmitterInterface;
 use MonsterMQ\Interfaces\Core\Channel as ChannelInterface;
 use MonsterMQ\Interfaces\Connections\Stream as StreamInterface;
+use MonsterMQ\Interfaces\Core\Events as EventsInterface;
 use MonsterMQ\Interfaces\Core\Exchange as ExchangeInterface;
 use MonsterMQ\Interfaces\Core\Qos as QosInterface;
 use MonsterMQ\Interfaces\Core\Queue as QueueInterface;
 use MonsterMQ\Interfaces\Core\Session as SessionInterface;
+use MonsterMQ\Interfaces\Core\Transaction as TransactionInterface;
 use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 use MonsterMQ\Support\Logger;
 
 abstract class BaseClient
 {
+    protected $logger;
+
     protected $socket;
+
+    protected $events;
 
     /**
      * @var BinaryTransmitterInterface
@@ -52,13 +61,15 @@ abstract class BaseClient
      */
     protected $qos;
 
-    protected $logger;
-
     protected $basicDispatcher;
+
+    protected $transaction;
 
     protected $currentChannelNumber = 0;
 
     public function __construct(
+        LoggerInterface $logger = null,
+        EventsInterface $events = null,
         StreamInterface $socket = null,
         BinaryTransmitterInterface $transmitter = null,
         SessionInterface $session = null,
@@ -67,9 +78,11 @@ abstract class BaseClient
         QueueInterface $queue = null,
         QosInterface $qos = null,
         BasicDispatcher $basicDispatcher = null,
-        LoggerInterface $logger = null
+        TransactionInterface $transaction = null
     ) {
         $this->setLogger($logger);
+
+        $this->setEvents($events);
 		
         $this->setSocket($socket);
 
@@ -83,15 +96,35 @@ abstract class BaseClient
 
         $this->setQueue($queue);
 
-        $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter, $this);
+        $this->basicDispatcher = $basicDispatcher ?? new \MonsterMQ\AMQPDispatchers\BasicDispatcher($this->transmitter, $this, $this->events);
 
         $this->setQos($qos);
+
+        $this->setTransaction($transaction);
     }
 
     public function __destruct()
     {
-        //Separation of log message blocks in log file
+        //Separator of log message blocks in log file
         $this->logger->write("\n\n", true);
+    }
+
+    protected function setLogger(LoggerInterface $logger = null)
+    {
+        if (!is_null($logger)) {
+            $this->logger = $logger;
+        } else {
+            $this->logger = new Logger();
+        }
+    }
+
+    protected function setEvents(EventsInterface $events = null)
+    {
+        if (!is_null($events)) {
+            $this->events = $events;
+        } else {
+            $this->events = new Events();
+        }
     }
 
     protected function setSocket(StreamInterface $socket = null)
@@ -115,7 +148,7 @@ abstract class BaseClient
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
-            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this), $this->logger);
+            $this->session = new Session(new ConnectionDispatcher($this->transmitter, $this, $this->events), $this->logger);
         } else {
             $this->session = $session;
         }
@@ -124,7 +157,7 @@ abstract class BaseClient
     protected function setChannel(ChannelInterface $channel = null)
     {
         if (is_null($channel)) {
-            $this->channel = new Channel(new ChannelDispatcher($this->transmitter, $this), $this->session, $this->logger);
+            $this->channel = new Channel(new ChannelDispatcher($this->transmitter, $this, $this->events), $this->session, $this->logger);
         }else{
             $this->channel = $channel;
         }
@@ -135,7 +168,7 @@ abstract class BaseClient
         if (!is_null($exchange)) {
             $this->exchange = $exchange;
         } else {
-            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter, $this), $this, $this->logger);
+            $this->exchange = new Exchange(new ExchangeDispatcher($this->transmitter, $this, $this->events), $this, $this->logger);
         }
     }
 
@@ -144,7 +177,7 @@ abstract class BaseClient
         if (!is_null($queue)) {
             $this->queue = $queue;
         } else {
-            $this->queue = new Queue(new QueueDispatcher($this->transmitter, $this), $this, $this->logger);
+            $this->queue = new Queue(new QueueDispatcher($this->transmitter, $this, $this->events), $this, $this->logger);
         }
     }
 
@@ -157,12 +190,12 @@ abstract class BaseClient
         }
     }
 
-    protected function setLogger(LoggerInterface $logger = null)
+    protected function setTransaction(TransactionInterface $transaction = null)
     {
-        if (!is_null($logger)) {
-            $this->logger = $logger;
+        if (!is_null($transaction)) {
+            $this->transaction = $transaction;
         } else {
-            $this->logger = new Logger();
+            $this->transaction = new Transaction(new TransactionDispatcher($this->transmitter, $this, $this->events), $this, $this->logger);
         }
     }
 
@@ -252,6 +285,14 @@ abstract class BaseClient
     }
 
     /**
+     * @return \MonsterMQ\Interfaces\Support\Logger
+     */
+    protected function logger()
+    {
+        return $this->logger;
+    }
+
+    /**
      * @return \MonsterMQ\Interfaces\Connections\Stream
      */
     public function socket()
@@ -313,10 +354,20 @@ abstract class BaseClient
     }
 
     /**
-     * @return \MonsterMQ\Interfaces\Support\Logger
+     *
+     *
+     * @return \MonsterMQ\Interfaces\Core\Transaction
      */
-    protected function logger()
+    public function transaction()
     {
-        return $this->logger;
+        return $this->transaction;
+    }
+
+    /**
+     * @return \MonsterMQ\Interfaces\Core\Events
+     */
+    public function events()
+    {
+        return $this->events;
     }
 }
