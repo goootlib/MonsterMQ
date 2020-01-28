@@ -22,11 +22,11 @@ And the consumer:
 ```
 $consumer = new \MonsterMQ\Client\Consumer();
 ```
-Further we examine all features provided by them.
+Further we will examine all features provided by them.
 ### Common features
 Both client variations provide following features:
 - Network connection establishment with TLS or TCP.
-- Session establishment with username and password.
+- Session establishment with specified username and password.
 - Exchange declarations.
 - Queue declarations.
 - Events management.
