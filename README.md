@@ -65,7 +65,7 @@ $producer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
 
 **verifyPeerName()** - this method might be called in order to enable peer name verification, if you call this method you must also specify peer name by calling the peerName() method. Call to this method is not required if you don't want to verify name of remote peer certificate.
 
-**peerName($name)** - specify peer name with this method when peer name verification enabled. Call to this method is not required if you don't want to verify name of remote peer certificate.
+**peerName($name)** - specify peer name with this method when peer name verification enabled. Call to this method is not required if you don't want to verify name of remote peer certificate, or if you want that peer name will be automaticaly chosen based on the address argument of connect() method.
 
 **CA($pathToCAFile)** - specify the path to Certificate Authority file with this method in order to be able to establish TLS connection.
 
