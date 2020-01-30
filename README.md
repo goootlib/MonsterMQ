@@ -5,7 +5,7 @@ If you are already familiar with AMQP and RabbitMQ read on this manual, otherwis
 MonsterMQ intented for usage of 0.9.1 version of AMQP protocol, therefore it supports all RabbitMQ versions which support AMQP 0.9.1.
 Also MonsterMQ requires PHP 7.1 or higher.
 ## Setup
-To install the library use following composer command
+To install the library use the following composer command
 ```
 composer require monstermq/monstermq
 ```
@@ -83,7 +83,7 @@ $consumer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
 
 Use **logIn()** method on consumer or producer instance to start the session. This method accepts two arguments (which may be omitted), they are username and password of your RabbitMQ user. If you will omit login arguments, MonsterMQ will use 'guest' value for username and for password (which is credentials for default RabbitMQ user).
 ```
-$consumer->cronnect('127.0.0.1', 5672);
+$consumer->connect('127.0.0.1', 5672);
 $consumer->logIn('my-username', 'my-password');
 ```
 Use the following methods of session module in oder to configure the session:
