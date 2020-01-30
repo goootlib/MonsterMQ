@@ -32,7 +32,7 @@ Both client variations provide following features:
 - Queue declarations.
 - Events management.
 #### Network connection establishment
-In order to connect to specified RabbitMQ server by TCP protocol first create producer or consumer instance and then call connect method with ip address and port number of your RabbitMQ server. You may also specify connection timeout as a third argument of **connect()** method.
+In order to connect to specified RabbitMQ server by TCP protocol first create producer or consumer instance and then call **connect()** method with ip address and port number of your RabbitMQ server. You may also specify connection timeout as a third argument of **connect()** method.
 ```
 $consumer->connect('127.0.0.1', 5672, 10);
 ```
