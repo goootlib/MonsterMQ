@@ -9,7 +9,7 @@ To install the library use following composer command
 ```
 composer require monstermq/monstermq
 ```
-Then include composer autoloader in your script files to gain access to the library files
+Then include composer autoloader in your script files to gain access to the library classes
 ```
 require_once __DIR__.'/vendor/autoload.php';
 ```
@@ -32,9 +32,9 @@ Both client variations provide following features:
 - Queue declarations.
 - Events management.
 #### Network connection establishment
-In order to connect to specified RabbitMQ server by TCP protocol first create producer or consumer instance and then call connect method with ip address, port number number of your RabbitMQ server. You may also specify connection timeout as a third argument of connect method.
+In order to connect to specified RabbitMQ server by TCP protocol first create producer or consumer instance and then call connect method with ip address and port number of your RabbitMQ server. You may also specify connection timeout as a third argument of connect() method.
 ```
-$producer->connect('127.0.0.1', 5672, 10);
+$consumer->connect('127.0.0.1', 5672, 10);
 ```
 You may omit all arguments of **connect()** method. In this case MonsterMQ will try to connect to server on localhost with default port number (which is 5672).
 #### Configuring network TCP connection
@@ -49,12 +49,12 @@ $consumer->socket()->bindTo(9999, '127.0.0.1')->enableNodelay()->disableKeepaliv
 
 **disableKeepalive()** - this method disables [keepalive TCP feature](https://en.wikipedia.org/wiki/Keepalive).
 
-**setTimeout($seconds, $microseconds)** - this method sets reading/writing timeout for network connection. You may specify first and second arguments of the method as integers representing the number of seconds and microseconds accordingly, after which connection will be closed if no reading or writing to the socket occurs. setTimeout() method also allows to pass only one argument which might be an integer or a float, if this sigle argument is float the fractional part of it will be treated as microseconds whereas the number before the floating point will be treated as seconds.
+**setTimeout($seconds, $microseconds)** - this method sets reading/writing timeout for network connection. You may specify first and second arguments of the method as integers representing the number of seconds and microseconds accordingly, after which connection will be closed if no reading or writing to the socket have occured. setTimeout() method also allows to pass only one argument which might be an integer or a float, if this sigle argument is float the fractional part of it will be treated as microseconds whereas the number before the floating point will be treated as seconds.
 
 #### Configuring encrypted network connection
 MonsterMQ allows to use encrypted connections using TLS protocol. In order to utilize and configure it, call the following methods:
 ```
-$producer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
+$consumer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
   ->CA($pathToCAFile)->certificate($pathToCertificateFile)
   ->privateKey($pathToPrivateKey)->password($password)
   ->verifyDepth($number)->ciphers($ciphers)->connect();
@@ -74,3 +74,47 @@ $producer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
 **password($password)** - specify the password with which your certificate was created. Call to this method is not required if your certficate was created without password.
 
 **verifyDepth($number)** - specify the length of certificate chain after which verification will be aborted.
+
+**ciphers($list)** - Sets list of ciphers to be used for connection. List of all system supported ciphers in format that this method accept may be obtained by 'openssl ciphers' cli command.
+
+**enableNodelay()** and **setTimeout()** may also be used for encrypted connections whereas keepalive feature is not available for TLS.
+
+#### Session establishment
+
+Use **logIn()** method on consumer or producer instance to start the session. This method accepts two arguments (which may be omitted), they are username and password of your RabbitMQ user. If you will omit login arguments, MonsterMQ will use 'guest' value for username and for password (which is credentials for default RabbitMQ user).
+```
+$consumer->cronnect('127.0.0.1', 5672);
+$consumer->logIn('my-username', 'my-password');
+```
+Use the following methods of session module in oder to configure the session:
+```
+$consumer->session()->locale('en_US')->virtualHost('/')->logIn('my-username, 'my-password');
+```
+Previous methods allows you to choose locale and virtual host to be used.
+Also should to mention, that if you want to connect to RabbitMQ running on default port (which is 5672) on localhost you may skip call of **connect()** method and call only **logIn()** method in oder to establish a TCP connection and a session.
+#### Channels
+To change the channel used call **changeChannel()** method of consumer or producer instance:
+```
+$consumer->changeChannel();
+$consumer->changeChannel(2);
+```
+**changeChannel($channel)** method accepts one optional argument which is a channel number that going to be used. If you omit the argument library will choose the channel number automatically.
+To close specified channel call **closeChannel($channel)** method with channel number to be closed as an argument. To get channel currently being used call **currentChannel()**.
+#### Events
+During the work of MonsterMQ and RabbitMQ last one can suspend or close overproducing channels. To handle this events use the following methods of events module:
+```
+$producer->events()->channelSuspesion(
+  function ($suspendedChannel) use ($producer) {
+    echo "channel {$suspendedChannel} was suspended";
+    $producer->changeChannel();
+  }
+ )->channelClosure(
+  function ($closedChannel) use ($producer) {
+    echo "channel {$closedChannel} was closed";
+    $producer->changeChannel();
+   }
+ );
+ ```
+ Closures which handle this event accept numbers of suspended or closed channels respectively.
+ #### Exchanges
+ 
