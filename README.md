@@ -104,17 +104,21 @@ To close specified channel call **closeChannel($channel)** method with channel n
 During the work of MonsterMQ and RabbitMQ last one can suspend or close overproducing channels. To handle this events use the following methods of events module:
 ```
 $producer->events()->channelSuspesion(
-  function ($suspendedChannel) use ($producer) {
+ 
+ function ($suspendedChannel) use ($producer) {
     echo "channel {$suspendedChannel} was suspended";
     $producer->changeChannel();
   }
+ 
  )->channelClosure(
+ 
   function ($closedChannel) use ($producer) {
     echo "channel {$closedChannel} was closed";
     $producer->changeChannel();
    }
+ 
  );
  ```
- Closures which handle this event accept numbers of suspended or closed channels respectively.
+ Closures which handle this events accept numbers of suspended or closed channels respectively.
  #### Exchanges
  
