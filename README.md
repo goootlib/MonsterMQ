@@ -98,7 +98,7 @@ To change the channel used call **changeChannel()** method of consumer or produc
 $consumer->changeChannel();
 $consumer->changeChannel(2);
 ```
-**changeChannel($channel)** method accepts one optional argument which is a channel number that going to be used. If you omit the argument library will choose the channel number automatically.
+**changeChannel($channel)** method accepts one optional argument which is a channel number that going to be used. If you omit the argument this method will choose the channel number automatically and return its value for you. If specified channel suspended by the server **changeChannel($channel)** will return **false**.
 To close specified channel call **closeChannel($channel)** method with channel number to be closed as an argument. To get channel currently being used call **currentChannel()**.
 #### Events
 During the work of MonsterMQ and RabbitMQ last one can suspend or close overproducing channels. To handle this events use the following methods of events module:
