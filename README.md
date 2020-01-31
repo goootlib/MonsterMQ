@@ -121,4 +121,17 @@ $producer->events()->channelSuspesion(
  ```
  Closures which handle this events accept numbers of suspended or closed channels respectively.
  #### Exchanges
+ Use **declare()** method with **newDirectExchange($exchangeName)** to declare new direct exchange, with **newFanoutExchange($exchangeName)** to declare new fanout exchange or with **newTopicExchange($exchangeName)** to declare new topic exchange on consumer or producer instance. You also may set exchanges as *durable* or *autodelete*. Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged when a server restarts. Autodelete exchanges delete if no queues using them remain.
+ ```
+ $consumer->newDirectExchange('my-direct')->declare();
+ $consumer->newFanoutExchange('my-fanout')->setAutodelete()->declare();
+ $consumer->newTopicExchange('my-topic')->setDurable()->declare();
+ ```
+ If you wish to bind or unbind exchange to/from another exchange you may use the following methods:
+ ```
+ $consumer->exchange('exchange-to-be-bound')->bind('my-exchange', 'routing-key');
+ $consumer->exchange('exchange-to-be-unbound')->unbind('my-exchange', 'routing-key');
+ ```
+ If you binding or unbinding exchanges from/to each other, don't forget to specify routing key as a second argument of **bind()** or **unbind()** methods.
  
+#### Queues
