@@ -29,44 +29,118 @@ use MonsterMQ\Interfaces\Core\Transaction as TransactionInterface;
 use MonsterMQ\Interfaces\Support\Logger as LoggerInterface;
 use MonsterMQ\Support\Logger;
 
+/**
+ * This is a parent class for both the producer and the consumer. It provides
+ * common client functionality which producer and consumer extends.
+ *
+ * @author Gleb Zhukov <goootlib@gmail.com>
+ */
 abstract class BaseClient
 {
+    /**
+     * Logger instance responsible for writing log files and outputting to cli.
+     *
+     * @var LoggerInterface
+     */
     protected $logger;
 
+    /**
+     * Instance of socket layer. Responsible for establishing TCP and TLS
+     * connections.
+     *
+     * @var StreamInterface
+     */
     protected $socket;
 
+    /**
+     * Events instance which is responsible for handling of connections closures
+     * and suspensions.
+     *
+     * @var EventsInterface
+     */
     protected $events;
 
     /**
+     * Binary transmitter instance. Responsible for encoding to and decoding from
+     * a binary string.
+     *
      * @var BinaryTransmitterInterface
      */
     protected $transmitter;
 
+    /**
+     * Session module instance. Responsible for configuring and establishing of
+     * AMQP session.
+     *
+     * @var SessionInterface
+     */
     protected $session;
 
+    /**
+     * Instance responsible for opening and closing of AMQP channels.
+     *
+     * @var ChannelInterface
+     */
     protected $channel;
 
     /**
-     * @var \MonsterMQ\Interfaces\Core\Exchange
+     * Instance responsible for exchange declarations, bindings and deleting.
+     *
+     * @var ExchangeInterface
      */
     protected $exchange;
 
     /**
-     * @var \MonsterMQ\Interfaces\Core\Queue
+     * Instance responsible for managing queues.
+     *
+     * @var QueueInterface
      */
     protected $queue;
 
     /**
-     * @var \MonsterMQ\Interfaces\Core\Qos
+     * Instance which provides quality of service control.
+     *
+     * @var QosInterface
      */
     protected $qos;
 
+    /**
+     * This instance provides Basic AMQP-class methods. Which may be producer or
+     * consumer specific.
+     *
+     * @var BasicDispatcher
+     */
     protected $basicDispatcher;
 
+    /**
+     * Instance responsible for transactions feature.
+     *
+     * @var TransactionInterface
+     */
     protected $transaction;
 
+    /**
+     * Channel number currently being used.
+     *
+     * @var int
+     */
     protected $currentChannelNumber = 0;
 
+    /**
+     * BaseClient constructor.
+     *
+     * @param LoggerInterface|null $logger
+     * @param EventsInterface|null $events
+     * @param StreamInterface|null $socket
+     * @param BinaryTransmitterInterface|null $transmitter
+     * @param SessionInterface|null $session
+     * @param ChannelInterface|null $channel
+     * @param ExchangeInterface|null $exchange
+     * @param QueueInterface|null $queue
+     * @param QosInterface|null $qos
+     * @param BasicDispatcher|null $basicDispatcher
+     * @param TransactionInterface|null $transaction
+     */
     public function __construct(
         LoggerInterface $logger = null,
         EventsInterface $events = null,
@@ -103,12 +177,22 @@ abstract class BaseClient
         $this->setTransaction($transaction);
     }
 
+    /**
+     * Insert empty line to log file upon the session end.
+     */
     public function __destruct()
     {
         //Separator of log message blocks in log file
         $this->logger->write("\n\n", true);
     }
 
+    /**
+     * Sets logger instance. Which is used almost by all library modules.
+     *
+     * @param LoggerInterface|null $logger
+     *
+     * @throws \Exception
+     */
     protected function setLogger(LoggerInterface $logger = null)
     {
         if (!is_null($logger)) {
@@ -118,6 +202,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets the event instance. Which is used by all dispatchers.
+     *
+     * @param EventsInterface|null $events
+     */
     protected function setEvents(EventsInterface $events = null)
     {
         if (!is_null($events)) {
@@ -127,6 +216,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets instance of socket abstraction layer.
+     *
+     * @param StreamInterface|null $socket
+     */
     protected function setSocket(StreamInterface $socket = null)
     {
         if (is_null($socket)) {
@@ -136,6 +230,12 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets binary transmitter instance. Which used by all AMQP dispatchers for transmitting
+     * encoded data.
+     *
+     * @param BinaryTransmitterInterface|null $transmitter
+     */
     protected function setTransmitter(BinaryTransmitterInterface $transmitter = null)
     {
         if (is_null($transmitter)) {
@@ -145,6 +245,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets AMQP session layer instance.
+     *
+     * @param SessionInterface|null $session
+     */
     protected function setSession(SessionInterface $session = null)
     {
         if (is_null($session)) {
@@ -154,6 +259,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets AMQP channel manager.
+     *
+     * @param ChannelInterface|null $channel
+     */
     protected function setChannel(ChannelInterface $channel = null)
     {
         if (is_null($channel)) {
@@ -163,6 +273,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets exchange manager.
+     *
+     * @param ExchangeInterface|null $exchange
+     */
     protected function setExchange(ExchangeInterface $exchange = null)
     {
         if (!is_null($exchange)) {
@@ -172,6 +287,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets queue manager.
+     *
+     * @param QueueInterface|null $queue
+     */
     protected function setQueue(QueueInterface $queue = null)
     {
         if (!is_null($queue)) {
@@ -181,6 +301,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets instance responsible for quality of service.
+     *
+     * @param QosInterface|null $qos
+     */
     protected function setQos(QosInterface $qos = null)
     {
         if (!is_null($qos)) {
@@ -190,6 +315,11 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Sets transaction manager.
+     *
+     * @param TransactionInterface|null $transaction
+     */
     protected function setTransaction(TransactionInterface $transaction = null)
     {
         if (!is_null($transaction)) {
@@ -199,11 +329,29 @@ abstract class BaseClient
         }
     }
 
+    /**
+     * Connects to AMQP server.
+     *
+     * @param string   $address           Server's IP addres.
+     * @param int      $port              Server's port number.
+     * @param int|null $connectionTimeout Timeout after which connection attempt
+     *                                    will be aborted.
+     */
     public function connect(string $address = '127.0.0.1', int $port = 5672, int $connectionTimeout = null)
     {
         $this->socket->connect($address, $port, $connectionTimeout);
     }
 
+    /**
+     * Starts AMQP session.
+     *
+     * @param string $username Username for RabbitMQ user.
+     * @param string $password Password for RabbitMQ user.
+     *
+     * @throws \MonsterMQ\Exceptions\PackerException
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
     public function logIn(string $username = 'guest', string $password = 'guest')
     {
         if (!$this->socket->isConnected()){
@@ -217,6 +365,18 @@ abstract class BaseClient
         $this->changeChannel();
     }
 
+    /**
+     * Changes channel currently being used.
+     *
+     * @param null $channel Might be used to specify concrete channel number to
+     *                      change.
+     *
+     * @return bool|null     Returns channel number that was selected or false
+     *                       if channel is closed or suspended.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
     public function changeChannel($channel = null)
     {
         if (!is_null($channel)) {
@@ -234,18 +394,32 @@ abstract class BaseClient
         return $channel;
     }
 
+    /**
+     * Close specified channel.
+     *
+     * @param int $channel Channel to close.
+     *
+     * @throws \MonsterMQ\Exceptions\ProtocolException
+     * @throws \MonsterMQ\Exceptions\SessionException
+     */
     public function closeChannel(int $channel)
     {
         $this->channel->close($channel);
         $this->logger()->write("Channel {$channel} closed");
     }
 
+    /**
+     * Returns channel number currently being used.
+     *
+     * @return int
+     */
     public function currentChannel()
     {
         return $this->currentChannelNumber;
     }
 
     /**
+     * Declares new direct exchange.
      *
      * @return \MonsterMQ\Interfaces\Core\Exchange
      */
@@ -257,6 +431,7 @@ abstract class BaseClient
     }
 
     /**
+     * Declares new fanout exchange.
      *
      * @return \MonsterMQ\Interfaces\Core\Exchange
      */
@@ -268,6 +443,7 @@ abstract class BaseClient
     }
 
     /**
+     * Declares new topic exchange.
      *
      * @return \MonsterMQ\Interfaces\Core\Exchange
      */
@@ -278,6 +454,9 @@ abstract class BaseClient
         return $this->exchange;
     }
 
+    /**
+     * Closes opened session and network connection.
+     */
     public function disconnect()
     {
         $this->session()->logOut();
@@ -285,6 +464,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns logger instance.
+     *
      * @return \MonsterMQ\Interfaces\Support\Logger
      */
     protected function logger()
@@ -293,6 +474,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns network abstraction layer instance.
+     *
      * @return \MonsterMQ\Interfaces\Connections\Stream
      */
     public function socket()
@@ -301,6 +484,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns network abstraction layer instance.
+     *
      * @return \MonsterMQ\Interfaces\Connections\Stream
      */
     public function network()
@@ -309,6 +494,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns session instance.
+     *
      * @return \MonsterMQ\Interfaces\Core\Session
      */
     public function session()
@@ -317,6 +504,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns channel manager.
+     *
      * @return \MonsterMQ\Interfaces\Core\Channel
      */
     public function channel()
@@ -325,6 +514,9 @@ abstract class BaseClient
     }
 
     /**
+     * Returns exchange manager.
+     *
+     * @param string $name Exchange to manage.
      *
      * @return \MonsterMQ\Interfaces\Core\Exchange
      */
@@ -335,7 +527,9 @@ abstract class BaseClient
     }
 
     /**
-     * @param string $queueName
+     * Returns queue manager.
+     *
+     * @param string $queueName Queue to manage.
      *
      * @return \MonsterMQ\Interfaces\Core\Queue
      */
@@ -346,6 +540,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns quality of service manager.
+     *
      * @return \MonsterMQ\Interfaces\Core\Qos
      */
     public function qos()
@@ -354,7 +550,7 @@ abstract class BaseClient
     }
 
     /**
-     *
+     * Returns transaction manager
      *
      * @return \MonsterMQ\Interfaces\Core\Transaction
      */
@@ -364,6 +560,8 @@ abstract class BaseClient
     }
 
     /**
+     * Returns event manager.
+     *
      * @return \MonsterMQ\Interfaces\Core\Events
      */
     public function events()

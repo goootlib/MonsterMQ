@@ -92,9 +92,11 @@ Interface Stream
     public function verifyDepth(int $depth);
 
     /**
-     * Sets comma-separated list of ciphers.
+     * Sets list of ciphers to be used for connection. List of all system
+     * supported ciphers in format that this method accept may be obtained
+     * by 'openssl ciphers' cli command.
      *
-     * @param string $ciphers Comma-separated list of ciphers.
+     * @param string $ciphers List of ciphers.
      *
      * @return \MonsterMQ\Connections\Stream
      */

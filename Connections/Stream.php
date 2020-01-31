@@ -107,7 +107,7 @@ class Stream implements StreamInterface
     protected $verifyDepth;
 
     /**
-     * Comma separated list of available ciphers.
+     * List of ciphers to be used for encrypted connection.
      *
      * @var string
      */
@@ -318,9 +318,11 @@ class Stream implements StreamInterface
     }
 
     /**
-     * Sets comma-separated list of ciphers.
+     * Sets list of ciphers to be used for connection. List of all system
+     * supported ciphers in format that this method accept may be obtained
+     * by 'openssl ciphers' cli command.
      *
-     * @param string $ciphers Comma-separated list of ciphers.
+     * @param string $ciphers List of ciphers.
      *
      * @return $this
      */
@@ -584,10 +586,8 @@ class Stream implements StreamInterface
      */
     public function connect (string $address = '127.0.0.1', int $AMQPport = 5672, float $connectionTimeout = null)
     {
-        if (!$this->contextAvailable) {
-            $this->refreshContext();
-        }
-
+        $this->refreshContext();
+        
         $this->logger->write("Connecting to {$address} on port {$AMQPport} by protocol {$this->protocol}");
 
         $this->streamResource = stream_socket_client(
@@ -705,8 +705,10 @@ class Stream implements StreamInterface
     {
         if (isset($this->streamResource)) {
             $this->logger->write("Closing socket connection");
-
+            $this->context = null;
             stream_socket_shutdown($this->streamResource, STREAM_SHUT_RDWR);
         }
+
+        $this->protocol = 'tcp';
     }
 }
