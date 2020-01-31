@@ -77,6 +77,14 @@ $consumer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
 
 **ciphers($list)** - Sets list of ciphers to be used for connection. List of all system supported ciphers in format that this method accept may be obtained by 'openssl ciphers' cli command.
 
+To enable usage of self-signed certificates use **allowSelfSigned()** method of network module
+```
+$consumer->network()->useTLS()->allowSelfSigneed()
+  ->CA($pathToCAFile)->certificate($pathToCertificateFile)
+  ->privateKey($pathToPrivateKey)->password($password)
+  ->connect();
+```
+
 **enableNodelay()** and **setTimeout()** may also be used for encrypted connections whereas keepalive feature is not available for TLS.
 
 #### Session establishment
