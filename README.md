@@ -77,7 +77,7 @@ $consumer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
 
 **ciphers($list)** - Sets list of ciphers to be used for connection. List of all system supported ciphers in format that this method accept may be obtained by 'openssl ciphers' cli command.
 
-To enable usage of self-signed certificates use **allowSelfSigned()** method of network module
+To enable utilizing of self-signed certificates use **allowSelfSigned()** method of network module:
 ```
 $consumer->network()->useTLS()->allowSelfSigneed()
   ->CA($pathToCAFile)->certificate($pathToCertificateFile)
@@ -129,7 +129,7 @@ $producer->events()->channelSuspesion(
  ```
  Closures which handle this events accept numbers of suspended or closed channels respectively.
  #### Exchanges
- Use **declare()** method with **newDirectExchange($exchangeName)** to declare new direct exchange, with **newFanoutExchange($exchangeName)** to declare new fanout exchange or with **newTopicExchange($exchangeName)** to declare new topic exchange on consumer or producer instance. You also may set exchanges as *durable* or *autodelete*. Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged when a server restarts. Autodelete exchanges delete if no queues using them remain.
+ Use **declare()** method with **newDirectExchange($exchangeName)** to declare new direct exchange, with **newFanoutExchange($exchangeName)** to declare new fanout exchange or with **newTopicExchange($exchangeName)** to declare new topic exchange on client (consumer or producer) instance. You also may set exchanges as *durable* or *autodelete*. Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged when a server restarts. Autodelete exchanges delete if no queues using them remain.
  ```
  $consumer->newDirectExchange('my-direct')->declare();
  $consumer->newFanoutExchange('my-fanout')->setAutodelete()->declare();
@@ -143,3 +143,45 @@ $producer->events()->channelSuspesion(
  If you binding or unbinding exchanges from/to each other, don't forget to specify routing key as a second argument of **bind()** or **unbind()** methods.
  
 #### Queues
+In order to decalre queue first you need to specify queue name as first argument of **queue()** method of client (producer or consumer) instance and after that call the declare method. You may also set queues as *durable*, *autodelete* or *exclusive*. Durable queues remains after the server restart whereas non-durable (which used by default) are not. Autodelete queues delete if no consumers using it left. Exclusive queues may only be accessed by the current connection, and are deleted when that connection closes. 
+```
+$consumer->queue('queue-1')->declare()->bind('my_direct', 'cba');
+$consumer->queue('queue-2')->setDurable()->declare()->bind('my_topic','abc');
+$consumer->queue('queue-3')->setAutodelete()->declare()->bind('my_direct', 'cab');
+$consumer->queue('queue-4')->setExclusive()->declare()->bind('my_direct', 'bca');
+$consumer->queue('queue-5')->setDurable()->declare()->bind('my_direct', 'bac');
+$consumer->queue('queue-1')->unbind('my_direct', 'abc');
+```
+**bind($exchange, $routingkey)** methods binds queue to specified exchange(first method argument) with specified routing key(second method argument).
+**unbind($exchange, $routingKey)** method unbinds queue from exchange with routing key.
+```
+$consumer->queue('queue-1')->deleteIfUnused();
+$consumer->queue('queue-2')->deleteIfEmpty();
+$consumer->queue('queue-3')->delete();
+$consumer->queue('queue-4')->purge();
+```
+Use **delete()**, **deleteIfEmpty()** and **deleteIfUnused()** method in oder to delete queue specified by **queue()** method. **deleteIfEmpty()** method deletes queue if it doesn't contains any messages. **deleteIfUnused()** deletes queue if no consumers using the queue left. And **delete()** method deletes queue in any case. Also you may use **purge()** method in order to remove all messages from a queue which are not awaiting acknowledgment. All four previous methods return number of messages had been deleted during deletion or purification.
+### Producer
+Use **publish($message, $routingKey, $exchange)** on producer instance to publish messages to a queue. Second argument of this method (which is routing key for publishing) may be omitted if you have already called **defaultRoutingKey($routingKey)** in order to set default routing key for all publications with no routing keys. As well as setting default routing key you may override default exchange to be used when the third argument of **publish()** method was omitted. To override the default RabbitMQ exchange use **overrideDefaultExchange($exchange)** method on producer instance.
+```
+$producer->publish('with exchange and routing key specified', 'bac', 'my_direct');
+$producer->overrideDefaultExchange('my_direct');
+$producer->defaultRoutingKey('bac');
+$producer->publish('with overridden exchange and default routing key set');
+$producer->publish('with overridden exchange and default routing key set 2');
+```
+Keep in mind that by default RabbitMQ provides default exchange which forwards messages to queues that named as the routing keys used upon publication. For example following messages will be delivered to queues with names 'queue-1' and 'queue-2' if you haven't already overrode default exchange with **overrideDefaultExchange()** method.
+```
+$producer->publish('with default RabbitMQ's exchange', 'queue-1');
+$producer->publish('with default RabbitMQ's exchange 2', 'queue-2');
+```
+
+### Consumer
+The following features intended for consumer usage only.
+#### Quality of service
+**prefetchCount($number)**  method in MonsterMQ allows you to send messages in advance so that when the client finishes processing a message, the following message is already held locally, rather than needing to be sent down the channel. This setting can be used per channel or per consumer.
+```
+$producer->qos()->prefetchCount(10)->perConsumer()->apply();
+$producer->qos()->prefetchCount(5)->perChannel()->apply();
+```
+#### 
