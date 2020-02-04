@@ -106,7 +106,7 @@ To change the channel used call **changeChannel()** method of consumer or produc
 $consumer->changeChannel();
 $consumer->changeChannel(2);
 ```
-**changeChannel($channel)** method accepts one optional argument which is a channel number that going to be used. If you omit the argument this method will choose the channel number automatically and return its value for you. If specified channel suspended by the server **changeChannel($channel)** will return **false**.
+**changeChannel($channel)** method accepts one optional argument which is a channel number going to be used. If you omit the argument this method will choose the channel number automatically and return its value for you. If specified channel suspended by the server **changeChannel($channel)** will return **false**.
 To close specified channel call **closeChannel($channel)** method with channel number to be closed as an argument. To get channel currently being used call **currentChannel()**.
 #### Events
 During the work of MonsterMQ and RabbitMQ last one can suspend or close overproducing channels. To handle this events use the following methods of events module:
@@ -160,13 +160,13 @@ $consumer->queue('queue-2')->deleteIfEmpty();
 $consumer->queue('queue-3')->delete();
 $consumer->queue('queue-4')->purge();
 ```
-Use **delete()**, **deleteIfEmpty()** and **deleteIfUnused()** method in oder to delete queue specified by **queue()** method. **deleteIfEmpty()** method deletes queue if it doesn't contains any messages. **deleteIfUnused()** deletes queue if no consumers using the queue left. And **delete()** method deletes queue in any case. Also you may use **purge()** method in order to remove all messages from a queue which are not awaiting acknowledgment. All four previous methods return number of messages had been deleted during deletion or purification.
+Use **delete()**, **deleteIfEmpty()** and **deleteIfUnused()** method in oder to delete queue selected by **queue()** method. **deleteIfEmpty()** method deletes queue if it doesn't contains any messages. **deleteIfUnused()** deletes queue if no consumers using the queue left. And **delete()** method deletes queue in any case. Also you may use **purge()** method in order to remove all messages from a queue which are not awaiting acknowledgment. All four previous methods return number of messages had been deleted during deletion or purification.
 ### Producer
 Use **publish($message, $routingKey, $exchange)** on producer instance to publish messages to a queue. Second argument of this method (which is routing key for publishing) may be omitted if you have already called **defaultRoutingKey($routingKey)** in order to set default routing key for all publications with no routing keys. As well as setting default routing key you may override default exchange to be used when the third argument of **publish()** method have omitted. To override the default RabbitMQ exchange use **overrideDefaultExchange($exchange)** method on producer instance.
 ```
-$producer->publish('with exchange and routing key specified', 'bac', 'my_direct');
+$producer->publish('with exchange and routing key specified', 'abc', 'my_direct');
 $producer->overrideDefaultExchange('my_direct');
-$producer->defaultRoutingKey('bac');
+$producer->defaultRoutingKey('abc');
 $producer->publish('with overridden exchange and default routing key set');
 $producer->publish('with overridden exchange and default routing key set 2');
 ```
@@ -175,13 +175,47 @@ Keep in mind that by default RabbitMQ provides default exchange which forwards m
 $producer->publish('with default RabbitMQ's exchange', 'queue-1');
 $producer->publish('with default RabbitMQ's exchange 2', 'queue-2');
 ```
-
 ### Consumer
-The following features intended for consumer usage only.
+```
+$consumer->consume('my-queue', true);
+```
+Use **consume($queue, $noAck)** method in order to start receiving messages from the queue. First argument of this method represents queue name to receive messages from. The second argument is optional and if it is omitted you will be have to acknowledge or reject  every received message with **ackLast()**, **ackAll()**, **rejectLast()**, **rejectAll()** methods. If this (second) argument of **consume()** method isn't set to *true*, messages will remain in queues until they get acklowledged. Use *$noAck* argument if you are not afraid of losing messages. **consume()** method also returns *consumerTag* which might be used with **stopConsume($consumerTag)** to stop consuming concrete queues. If **stopConsume()** method invoked without arguments, it will stop consuming all queues for channel currently being used.
+#### Start consuming loop
+Use **wait($closure)** to start consuming loop to asynchronously receive messages from the server. This method accepts only one argument wich is a closure to be called upon receipt of a message which in turn accepts two arguments: message and channel number have been used.
+```
+$consumer = new \MonsterMQ\Client\Consumer();
+$consumer->logIn();
+$consumer->queue('my-queue')->declare();
+$consumer->consume('my-queue');
+$consumer->wait(function ($message, $channel) use ($consumer){
+   echo $message."\n";
+   echo $channel."\n";
+   $consumer->ackLast();
+});
+```
+Use **ackLast()** to acknowledge last accepted message, **ackAll()** to acknowledge all unacknowledged messages up to the currently handled message (and including it). **rejectLast()**  method allows a client to reject last incoming message. It can be used to interrupt and cancel large incoming messages, or return untreatable messages to their original queue. **rejectAll()** rejects all unacknowledged messages up to the currently handled message (and including it).
+#### Synchronous message obtaining
+You may obtain messages syncronously without starting the consuming loop by using **get($queue)** method. It accepts only one argument which is queue name from which you would like to obtain a message. And it returns array first element of which is message and second is the channel number have been used.
+```
+[$message, $channel] = $consumer->get('my-queue');
+echo $message;
+echo $channel;
+$consumer->ackLast();
+```
 #### Quality of service
-**prefetchCount($number)**  method in MonsterMQ allows you to send messages in advance so that when the client finishes processing a message, the following message is already held locally, rather than needing to be sent down the channel. This setting can be used per channel or per consumer.
+**prefetchCount($number)**  method in MonsterMQ allows you to send messages in advance, so that when the client finishes processing a message, the following message is already held locally, rather than needing to be sent down the channel. This setting can be used per channel or per consumer.
 ```
 $producer->qos()->prefetchCount(10)->perConsumer()->apply();
 $producer->qos()->prefetchCount(5)->perChannel()->apply();
 ```
-#### 
+#### Message redelivery
+Use **redeliver($requeue)** method in order to redeliver all unacknowledged messages. It accepts only one optional argument which is when omitted will redeliver messages to the original recipient. And when set to *true* will attempt to requeue the message, potentially then delivering it to an alternative subscriber.
+```
+$consumer->wait(function ($message, $channel) use ($consumer){
+  echo $message."\n";
+  echo $channel."\n";
+  $consumer->redeliver();
+});
+```
+### Logging
+If you will eximine Log directory of MonsterMQ you will find directories named accordingly to years containing log files of producers named accordingly to months when they had been written. Consumers do not write log files instead they output their procces description to cli output.
