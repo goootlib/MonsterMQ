@@ -9,16 +9,6 @@ namespace MonsterMQ\Client;
  */
 class Consumer extends BaseClient
 {
-
-    /**
-     * If this field is set the server does not expect acknowledgements for
-     * messages. That is, when a message is delivered to the client the server
-     * assumes the delivery will succeed and immediately dequeues it.
-     *
-     * @var bool
-     */
-    protected $noAck = false;
-
     /**
      * Consumer tag.
      *
