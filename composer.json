@@ -1,0 +1,7 @@
+{
+    "name": "goootlib/MonsterMQ",
+    "description": "This is a PHP client for RabbitMQ",
+    "require": {
+        "php": "^7.1"
+    }
+}
