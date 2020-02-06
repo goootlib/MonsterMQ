@@ -1,5 +1,5 @@
 {
-    "name": "goootlib/monster-mq",
+    "name": "goootlib/monstermq",
     "description": "PHP client for RabbitMQ",
 	"license": "MIT",
     "require": {
