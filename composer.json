@@ -1,6 +1,6 @@
 {
     "name": "goootlib/monster-mq",
-    "description": "This is a PHP client for RabbitMQ",
+    "description": "PHP client for RabbitMQ",
     "require": {
         "php": "^7.1"
     }
