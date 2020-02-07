@@ -96,9 +96,9 @@ class Consumer extends BaseClient
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function get(string $queue)
+    public function get(string $queue, $noAck = false)
     {
-        $this->basicDispatcher->sendGet($this->currentChannel(), $queue, $this->noAck);
+        $this->basicDispatcher->sendGet($this->currentChannel(), $queue, $noAck);
         return $this->basicDispatcher->receiveGetOkOrGetEmpty();
     }
 
