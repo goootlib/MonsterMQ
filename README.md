@@ -7,7 +7,7 @@ Also MonsterMQ requires PHP 7.1 or higher.
 ## Setup
 To install the library use the following composer command
 ```
-composer require goootlib/monstermq:dev-master
+composer require goootlib/monster-mq:dev-master
 ```
 Then include composer autoloader in your script files to gain access to the library classes
 ```
