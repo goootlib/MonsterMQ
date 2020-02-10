@@ -191,7 +191,7 @@ abstract class BaseDispatcher implements AMQP
         $timeout = $heartbeatInterval * 2;
         if (time() >= $this->lastRead + $timeout) {
             throw new ConnectionException(
-                "Heartbeat missed. Server does not respond."
+                "Heartbeat missed. Server isn't responding."
             );
         }
 

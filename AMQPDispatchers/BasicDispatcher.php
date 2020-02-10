@@ -474,22 +474,32 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
     {
         [$classId, $methodId] = $this->receiveClassAndMethod();
 
-        if ($classId != self::BASIC_CLASS_ID || ($methodId != self::BASIC_GET_OK || $methodId != self::BASIC_GET_EMPTY)) {
+        if ($classId != self::BASIC_CLASS_ID
+            || ($methodId != self::BASIC_GET_OK && $methodId != self::BASIC_GET_EMPTY && $methodId != self::BASIC_DELIVER)
+        ) {
             throw new ProtocolException(
                 "Unexpected method frame. Expecting 
-                class id '60' and method id '71' or '72'. '{$classId}' and '{$methodId}' given.");
+                class id '60' and method id '60', '71' or '72'. '{$classId}' and '{$methodId}' given.");
         }
 
         if ($methodId == self::BASIC_GET_EMPTY) {
             $this->transmitter->receiveShortStr();
             $this->validateFrameDelimiter();
             return false;
-        } else {
+        } elseif ($methodId == self::BASIC_GET_OK) {
             $this->setCurrentDeliveryTag($this->transmitter->receiveLongLong());
             $redelivered = $this->transmitter->receiveOctet();
             $exchangeName = $this->transmitter->receiveShortStr();
             $routingKey = $this->transmitter->receiveShortStr();
             $messageCount = $this->transmitter->receiveLong();
+            $this->validateFrameDelimiter();
+            return $this->receiveContent();
+        } elseif ($methodId == self::BASIC_DELIVER) {
+            $consumerTag = $this->transmitter->receiveShortStr();
+            $this->setCurrentDeliveryTag($this->transmitter->receiveLongLong());
+            $redelivered = $this->transmitter->receiveOctet();
+            $exchange = $this->transmitter->receiveShortStr();
+            $routingKey = $this->transmitter->receiveShortStr();
             $this->validateFrameDelimiter();
             return $this->receiveContent();
         }
