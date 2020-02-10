@@ -462,7 +462,7 @@ class BinaryTransmitter implements BinaryTransmitterInterface
     public function sendRaw(string $data): ?int
     {
         if ($this->accumulate) {
-            $this->buffer .= $data;
+            @$this->buffer .= $data;
             return null;
         }
         return $this->socket->writeRaw($data);
