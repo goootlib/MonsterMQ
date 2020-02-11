@@ -13,7 +13,7 @@ Or you may add "goootlib/monster-mq":"dev-master" as a new dependency to the *re
 ```
 {
     "require": {
-        "other-vendor/other-dependency": "^5.4",
+        "other-vendor/other-package": "^5.4",
 	"goootlib/monster-mq":"dev-master"
     }
 }
