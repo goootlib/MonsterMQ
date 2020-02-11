@@ -33,7 +33,7 @@ And the consumer:
 ```
 $consumer = new \MonsterMQ\Client\Consumer();
 ```
-Further we will examine all features provided by them. When working with MonsterMQ on production environment don't forget to enclose all your code which utilizes MonsterMQ in try/catch construction and handle exceptions instances which may be thrown during the work of the library.
+Further we will examine all features provided by them. Also, when working with MonsterMQ on production environment don't forget to enclose all your code which utilizes MonsterMQ in try/catch construction and write code which handles exceptions instances that may be thrown during the work of the library.
 ### Common features
 Both client variations provide following features:
 - Network connection establishment with TLS or TCP.
