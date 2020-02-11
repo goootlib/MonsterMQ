@@ -9,7 +9,17 @@ To install the library use the following composer command
 ```
 composer require goootlib/monster-mq:dev-master
 ```
-Then include composer autoloader in your script files to gain access to the library classes
+Or you may add "goootlib/monster-mq":"dev-master" as a new dependency to the *require* section of your **composer.json** file like so:
+```
+{
+    "require": {
+        "other-vendor/other-dependency": "^5.4",
+		    "goootlib/monster-mq":"dev-master"
+    }
+}
+```
+And then call **composer update** command to install declared dependecies. Keep in mind - **composer update** will also update all your other dependecies to the latest versions.
+After installation include composer autoloader in your script files to gain access to the library classes
 ```
 require_once __DIR__.'/vendor/autoload.php';
 ```
