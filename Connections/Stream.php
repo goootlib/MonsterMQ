@@ -187,7 +187,7 @@ class Stream implements StreamInterface
      */
     public function useTLS()
     {
-        $this->protocol = 'tls';
+        $this->protocol = 'ssl';
 
         return $this;
     }
@@ -473,7 +473,7 @@ class Stream implements StreamInterface
             $this->logger->write('Setting up TLS connection context '.$message);
 
             $this->context = stream_context_create([
-                'tls' => $contextOptions
+                'ssl' => $contextOptions
             ]);
         }
 
