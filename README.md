@@ -205,13 +205,6 @@ $consumer->wait(function ($message, $channel) use ($consumer){
 });
 ```
 Use **ackLast()** to acknowledge last accepted message, **ackAll()** to acknowledge all unacknowledged messages up to the currently handled message (and including it). **rejectLast()**  method allows a client to reject last incoming message. It can be used to interrupt and cancel large incoming messages, or return untreatable messages to their original queue. **rejectAll()** rejects all unacknowledged messages up to the currently handled message (and including it).
-#### Synchronous message obtaining
-You may obtain messages syncronously without starting the consuming loop by using **get($queue, $noAck)** method. It accepts two arguments which is queue name from which you would like to obtain a message and whether to use acknowledgent for receiving message(true - means no acknowledgement). And it returns array first element of which is message and second is the channel number have been used.
-```
-[$message, $channel] = $consumer->get('my-queue', true);
-echo $message;
-echo $channel;
-```
 #### Quality of service
 **prefetchCount($number)**  method in MonsterMQ allows you to send messages in advance, so that when the client finishes processing a message, the following message is already held locally, rather than needing to be sent down the channel. This setting can be used per channel or per consumer.
 ```
