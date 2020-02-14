@@ -221,4 +221,4 @@ $consumer->wait(function ($message, $channel) use ($consumer){
 });
 ```
 ### Logging
-If you will eximine Log directory of MonsterMQ you will find directories named accordingly to years containing log files of producers named accordingly to months when they had been written. Consumers do not write log files instead they output their procces description to cli output.
+If you would eximine Log directory of MonsterMQ you will find directories named accordingly to years, containing log files of producers, named accordingly to months when they had been started. Consumers do not write log files instead they output their procces description to cli output.
