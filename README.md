@@ -1,6 +1,6 @@
 # MonsterMQ
 MonsterMQ is a PHP implementation of AMQP client. It provides consumer and producer AMQP client variations with convenient and elegant API.
-If you are already familiar with AMQP and RabbitMQ read on this manual, otherwise I would recommend to get started with reading this tutorial.
+If you are already familiar with AMQP and RabbitMQ read on this manual, otherwise I would recommend to get started with reading [this tutorial](https://habr.com/ru/post/488850/).
 ## Requirements
 MonsterMQ intented for usage of 0.9.1 version of AMQP protocol, therefore it supports all RabbitMQ versions which support AMQP 0.9.1.
 Also MonsterMQ requires PHP 7.1 or higher.
