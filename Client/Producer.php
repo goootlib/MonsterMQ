@@ -35,7 +35,7 @@ class Producer extends BaseClient
      */
     public function publish (string $message, $routingKey = null, $exchange = '')
     {
-        $routingKey = $routingKey ?? $this->defaultRoutingKey;
+        $routingKey = is_null($routingKey) ? $this->defaultRoutingKey : $routingKey;
         $exchange = $exchange != '' ? $exchange : $this->defaultExchange;
 
         $this->basicDispatcher->sendPublish(

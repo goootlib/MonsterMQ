@@ -231,7 +231,7 @@ class BasicDispatcher extends BaseDispatcher implements BasicDispatcherInterface
      */
     public function sendPublish(
         int $channel,
-        string $routingKey,
+        $routingKey = "",
         string $exchangeName = "",
         bool $mandatory = false,
         bool $immediate = false
