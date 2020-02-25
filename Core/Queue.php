@@ -123,7 +123,7 @@ class Queue implements QueueInterface
      * @throws \MonsterMQ\Exceptions\ProtocolException
      * @throws \MonsterMQ\Exceptions\SessionException
      */
-    public function bind(string $exchangeName, string $routingKey)
+    public function bind(string $exchangeName, $routingKey = '' )
     {
         $channel = $this->client->currentChannel();
         $this->logger->write("Binding queue '{$this->currentQueueName}' to exchange '{$exchangeName}' with routing key '{$routingKey}' on channel {$channel}");

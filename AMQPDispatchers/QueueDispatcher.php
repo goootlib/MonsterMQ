@@ -113,7 +113,7 @@ class QueueDispatcher extends BaseDispatcher implements QueueDispatcherInterface
         int $channel,
         string $queueName,
         string $exchangeName,
-        string $routingKey,
+        $routingKey = '',
         bool $noWait = false,
         array $arguments = []
     ) {
