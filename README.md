@@ -18,7 +18,7 @@ Or you may add "goootlib/monster-mq":"dev-master" as a new dependency to the *re
     }
 }
 ```
-And then call **composer update** command to install declared dependecies. Keep in mind - **composer update** will also update all your other dependecies to the latest versions.
+And then call **composer update** command to install declared dependecies. Bear in mind - **composer update** will also update all your other dependecies to the latest versions.
 After installation include composer autoloader in your script files to gain access to the library classes
 ```
 require_once __DIR__.'/vendor/autoload.php';
