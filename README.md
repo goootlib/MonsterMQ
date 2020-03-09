@@ -70,6 +70,7 @@ $consumer->network()->useTLS()->verifyPeer()->verifyPeerName()->peerName($name)
   ->verifyDepth($number)->ciphers($ciphers)->connect('127.0.0.1', 5671);
 ```
 Don't forget to specify port number of TLS listener that you configure in your RabbitMQ cofiguration file.
+
 **useTLS()** - this method must be called to enable TLS.
 
 **verifyPeer()** - this method must be called in order to enable peer verification. If you want only to use encryption without peer verification you may skip this method call.
